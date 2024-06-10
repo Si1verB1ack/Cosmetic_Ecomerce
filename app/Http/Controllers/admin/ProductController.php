@@ -138,21 +138,31 @@ class ProductController extends Controller
      */
     public function edit($id, Request $request)
     {
-        $products = Product::find($id);
-        if(empty($products)){
+        $product = Product::find($id);
+        if(empty($product)){
             return redirect()->route('products.index')->with("not-found","Record not found");
         }
-        $productImages = ProductImage::where('product_id', $products->id)->get();
-        $subCategories = SubCategory::where('category_id',$products->category_id)->get();
+        $productImages = ProductImage::where('product_id', $product->id)->get();
+        $subCategories = SubCategory::where('category_id',$product->category_id)->get();
         $categories = Category::orderBy('name','ASC')->get();
         $brands = Brands::orderBy('name','ASC')->get();
-        $data = [];
 
+        //fetches the related products
+        $relatedProucts = [];
+        if($product->related_products!=''){
+            $productArray = explode(',',$product->related_products);
+            $relatedProucts = Product::whereIn('id',$productArray)->get();
+        }
+
+
+
+        $data = [];
         $data['categories'] = $categories;
         $data['brands'] = $brands;
-        $data['products']= $products;
+        $data['products']= $product;
         $data['subCategories']= $subCategories;
         $data['productImages']= $productImages;
+        $data['relatedProucts']= $relatedProucts;
         // dd($brand);
         return view('admin.products.edit',$data);
     }
@@ -198,6 +208,7 @@ class ProductController extends Controller
             $product->is_featured = $request->is_featured;
             $product->shipping_returns = $request->shipping_returns;
             $product->short_description = $request->short_description;
+            $product->related_products = (!empty($request->related_products) ? implode(',', $request->related_products) : ' ');
             $product->save();
 
             session()->flash('create-success','Product updated successfully');
