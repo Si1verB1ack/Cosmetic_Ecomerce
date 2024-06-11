@@ -156,6 +156,59 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h2 class="h4 mb-3">Inventory</h2>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="sku">SKU (Stock Keeping Unit)</label>
+                                            <input type="text" name="sku" id="sku" class="form-control"
+                                                value="{{$products->sku}}" placeholder="sku">
+                                                <p></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="barcode">Barcode</label>
+                                            <input type="text" name="barcode" id="barcode" class="form-control"
+                                                value="{{$products->barcode}}" placeholder="Barcode">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="hidden" name="track_qty" value="No">
+                                                <input class="custom-control-input" type="checkbox" id="track_qty"
+                                                    name="track_qty" value="Yes" {{$products->track_qty == 'Yes' ? 'checked':''}}>
+                                                <label for="track_qty" class="custom-control-label">Track Quantity</label>
+                                                <p></p>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <input type="number" min="0" name="qty" id="qty"
+                                                class="form-control" value="{{$products->qty}}" placeholder="Qty">
+                                                <p></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h2 class="h4 mb-3">Realated Products</h2>
+                                <div class="mb-3">
+                                    <select multiple class="related-product w-100" name="related_products[]" id="related_products">
+                                        @if (!empty($relatedProucts))
+                                            @foreach ($relatedProucts as $relProduct)
+                                                <option selected value="{{$relProduct->id}}">{{$relProduct->title}}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <p class="error"></p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <div class="card mb-3">
@@ -222,23 +275,6 @@
                                         <option {{($products->is_featured == 'No') ? 'selected' : ''}} value="No">No</option>
                                         <option {{($products->is_featured == 'Yes') ? 'selected' : ''}} value="Yes">Yes</option>
                                     </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <h2 class="h4 mb-3">Realated Products</h2>
-                                <div class="mb-3">
-                                    <select multiple class="related-product w-100" name="related_products[]" id="related_products">
-                                        @if (!empty($relatedProucts))
-                                            @foreach ($relatedProucts as $relProuct)
-                                                <option selected value="{{$relProuct->id}}">{{$relProuct->title}}</option>
-                                            @endforeach
-                                        @else
-
-                                        @endif
-                                    </select>
-                                    <p class="error"></p>
                                 </div>
                             </div>
                         </div>
