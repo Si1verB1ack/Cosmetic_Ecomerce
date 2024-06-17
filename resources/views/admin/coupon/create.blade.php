@@ -25,7 +25,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="code">Name</label>
+                                    <label for="code">Code</label>
                                     <input type="text" name="code" id="code" class="form-control" placeholder="Coupons Code">
                                     <p></p>
                                 </div>
@@ -86,14 +86,14 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="max_uses">Start At</label>
-                                    <input type="text" name="starts_at" id="starts_at" class="form-control" placeholder="Start At">
+                                    <input autocomplete="off" type="text" name="starts_at" id="starts_at" class="form-control" placeholder="Start At">
                                     <p></p>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="max_uses">Expires At</label>
-                                    <input type="text" name="expires_at" id="expires_at" class="form-control" placeholder="Expires At">
+                                    <input autocomplete="off" type="text" name="expires_at" id="expires_at" class="form-control" placeholder="Expires At">
                                     <p></p>
                                 </div>
                             </div>

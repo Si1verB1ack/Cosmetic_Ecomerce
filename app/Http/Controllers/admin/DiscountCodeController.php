@@ -11,8 +11,15 @@ use Illuminate\Support\Facades\Validator;
 class DiscountCodeController extends Controller
 {
     //create the 5 functions
-    public function index(){
-        return view('admin.coupon.list');
+    public function index(Request $request){
+        $discountCoupons = DiscountCoupon::latest('id');
+        // dd($discountCoupons = Category::latest());
+        if(!empty($request->get('keyword'))){
+            $discountCoupons = $discountCoupons->where('name','like','%'. $request->get('keyword'). '%');
+        }
+        $discountCoupons = $discountCoupons->paginate(10);
+
+        return view('admin.coupon.list',compact('discountCoupons'));
     }
     public function create(){
         return view('admin.coupon.create');
@@ -69,7 +76,7 @@ class DiscountCodeController extends Controller
 
             $message = 'Discount coupon added successfully';
 
-            session()->flash("add-success",$message);
+            session()->flash("create-success",$message);
             return response()->json([
                 'status' => true,
                 'message'=> $message,
