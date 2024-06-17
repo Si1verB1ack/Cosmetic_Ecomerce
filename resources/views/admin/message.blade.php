@@ -9,7 +9,6 @@
 <div class="alert alert-success alert-dismissible">
     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
     <h4><i class="icon fa fa-check"></i> Success!</h4>{{Session::get('success')}}
-    Success alert preview. This alert is dismissable.
 </div>
 @endif
 
@@ -61,6 +60,24 @@
             title: "{{Session::get('not-found')}}",
             showConfirmButton: false,
             timer: 1500
+        });
+    </script>
+@endif
+
+@if(Session::has('login-success'))
+    <script>
+        Swal.fire({
+        title: "{{Session::get('login-success')}}",
+        icon: "success"
+        });
+    </script>
+@endif
+
+@if(Session::has('login-failed'))
+    <script>
+        Swal.fire({
+        title: "{{Session::get('login-failed')}}",
+        icon: "error"
         });
     </script>
 @endif

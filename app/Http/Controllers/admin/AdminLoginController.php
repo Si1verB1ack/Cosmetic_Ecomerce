@@ -22,6 +22,7 @@ class AdminLoginController extends Controller
             'password'=>$request->password], $request->get('remember'))){
                 $admin =Auth::guard('admin')->user();
                 if($admin->role==2){
+                    session(['logged_in' => true]);
                     return redirect()->route('admin.dashboard')->with('loginsuccess','');
                 }else{
                     Auth::guard('admin')->logout();

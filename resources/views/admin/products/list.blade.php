@@ -71,9 +71,9 @@
                                             @endif
                                         </td>
                                         <td><a href="#">{{$product->title}}</a></td>
-                                        <td>{{$product->price}}</td>
-                                        <td>{{$product->qty}}</td>
-                                        <td>{{$product->sku}}</td>
+                                        <td>${{$product->price}}</td>
+                                        <td>{{$product->qty}} left in stock</td>
+                                        <td>SKU-{{$product->sku}}</td>
                                         <td>
                                             @if ($product->status==1)
                                             <svg class="text-success-500 h-6 w-6 text-success ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"  width="25" height="25">

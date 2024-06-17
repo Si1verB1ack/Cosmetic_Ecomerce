@@ -16,10 +16,13 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
+        $name =[];
+        $name = fake()->name();
         return [
-            'name' => fake()->name(),
+            'name' => $name,
             'status' => fake()->numberBetween(0,1),
-            'slug'=> fake()->unique()->name(),
+            'slug'=> $name,
+            'showHome'=> 'Yes',
         ];
     }
 }

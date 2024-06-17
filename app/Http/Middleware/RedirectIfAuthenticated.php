@@ -21,7 +21,11 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+
+                session()->flash('login-success','Login successfully\nWelcome '.Auth::user()->name);
+
+                return redirect()->route('account.profile')->with('login-success');
+                // return redirect(RouteServiceProvider::HOME);
             }
         }
 

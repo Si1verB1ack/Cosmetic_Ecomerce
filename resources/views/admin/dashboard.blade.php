@@ -2,7 +2,8 @@
 
 @section('content')
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@include('admin.message')
+{{-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @if(Session::has('loginsuccess'))
     <script>
         Swal.fire({
@@ -10,7 +11,7 @@
         icon: "success"
         });
     </script>
-@endif
+@endif --}}
 
 	<!-- Content Header (Page header) -->
 	<section class="content-header">

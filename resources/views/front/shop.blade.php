@@ -14,6 +14,7 @@
 
     <section class="section-6 pt-5">
         <div class="container">
+            @include('admin.message')
             <div class="row">
                 <div class="col-md-3 sidebar">
                     <div class="sub-title">
@@ -221,7 +222,7 @@
                     brands.push($(this).val());
                 }
             });
-            console.log(brands);
+            // console.log(brands);
             // Console.log(brands);
 
             var url = '{{ url()->current() }}?';
@@ -238,8 +239,6 @@
             url += '&sort=' + $("#sort").val();
 
             window.location.href = url;
-
-            console
         }
     </script>
 @endsection

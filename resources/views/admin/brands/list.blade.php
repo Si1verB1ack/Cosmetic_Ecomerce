@@ -134,19 +134,19 @@
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
                     // Swal.fire("Saved!", "", "success");
-                        $.ajax({
+                    $.ajax({
                         url: newUrl,
                         type:'delete',
                         data:{},
                         dataType: 'json',
                         headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(response){
-                                if(response["status"]){
-                                    window.location.href="{{route('brands.index')}}"
-                                }
+                            if(response["status"]){
+                                window.location.href="{{route('brands.index')}}"
                             }
+                        }
                     });
                 } else if (result.isDenied) {
                     Swal.fire("deletion cancel  ", "", "error");
