@@ -6,10 +6,10 @@
         <div class="container-fluid my-2">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>Create Category</h1>
+                    <h1>Edit Coupon Code</h1>
                 </div>
                 <div class="col-sm-6 text-right">
-                    <a href="{{route('categories.index')}}" class="btn btn-primary">Back</a>
+                    <a href="{{route('coupons.index')}}" class="btn btn-primary">Back</a>
                 </div>
             </div>
         </div>
@@ -19,61 +19,89 @@
     <section class="content">
         <!-- Default box -->
         <div class="container-fluid">
-            <form action="" method="post" id="categoryForm" name="categoryForm">
+            <form action="" method="post" id="discountForm" name="discountForm">
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
+                                    <label for="code">Code</label>
+                                    <input type="text" value="{{$coupon->code}}" name="code" id="code" class="form-control" placeholder="Coupons Code">
+                                    <p></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
                                     <label for="name">Name</label>
-                                    <input type="text" value="{{$category->name}}" name="name" id="name" class="form-control" placeholder="Name">
+                                    <input type="text" value="{{$coupon->name}}" name="name" id="name" class="form-control" placeholder="Coupons Code Name">
                                     <p></p>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="slug">Slug</label>
-                                    <input type="text" value="{{$category->slug}}" readonly name="slug" id="slug" class="form-control" placeholder="Slug">
+                                    <label for="max_uses">Max Uses</label>
+                                    <input type="text" value="{{$coupon->max_uses}}" name="max_uses" id="max_uses" class="form-control" placeholder="Max Uses">
                                     <p></p>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <input type="hidden" name="image_id" id="image_id">
-                                    <label for="image">Image</label>
-                                    <div id="image" class="dropzone dz-clickable">
-                                        <div class="dz-message needsclick">
-                                            <br>Drop files here or click to upload.<br><br>
-                                        </div>
-                                    </div>
+                                    <label for="max_uses">Max Uses User</label>
+                                    <input type="text" value="{{$coupon->max_uses_user}}" name="max_uses_user" id="max_uses_user" class="form-control" placeholder="Max Uses User">
+                                    <p></p>
                                 </div>
-                                @if(!@empty($category->image))
-                                <div>
-                                    <img width="300" src="{{asset('uploads/category/thumb/'.$category->image)}}"
-                                     alt="">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status">Type</label>
+                                    <select name="type" id="type" class="form-control">
+                                        <option {{($coupon->type=='percent') ? 'selected' : ''}} value="percent">Percent</option>
+                                        <option {{($coupon->type=='fixed') ? 'selected' : ''}} value="fixed">Fixed</option>
+                                    </select>
                                 </div>
-                                @endif
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="max_uses">Discount Amount</label>
+                                    <input type="text" value="{{$coupon->discount_amount}}" name="discount_amount" id="discount_amount" class="form-control" placeholder="Discount Amount">
+                                    <p></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="max_uses">Minimun Amount</label>
+                                    <input type="text" value="{{$coupon->min_amount}}" name="min_amount" id="min_amount" class="form-control" placeholder="Minimun Amount">
+                                    <p></p>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="status">Status</label>
                                     <select name="status" id="status" class="form-control">
-                                        <option {{($category->status==1)? 'selected' :''}}
-                                            value="1">Active</option>
-                                        <option {{($category->status==0)? 'selected' :''}}
-                                            value="0">Block</option>
+                                        <option {{($coupon->type==1) ? 'selected' : ''}} value="1">Active</option>
+                                        <option {{($coupon->type==0) ? 'selected' : ''}} value="0">Block</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="status">Show on Home</label>
-                                    <select name="showHome" id="showHome" class="form-control">
-                                        <option {{($category->showHome=='Yes')? 'selected' :''}}
-                                            value="Yes">Yes</option>
-                                        <option {{($category->showHome=='No')? 'selected' :''}}
-                                            value="No">No</option>
-                                    </select>
+                                    <label for="max_uses">Start At</label>
+                                    <input autocomplete="off" type="text" value="{{$coupon->starts_at}}" name="starts_at" id="starts_at" class="form-control" placeholder="Start At">
+                                    <p></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="max_uses">Expires At</label>
+                                    <input autocomplete="off" type="text" value="{{$coupon->expires_at}}" name="expires_at" id="expires_at" class="form-control" placeholder="Expires At">
+                                    <p></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="description">Description</label>
+                                    <textarea class="form-control" name="description" id="description" cols="30" rows="5">{{$coupon->description}}</textarea>
+                                    <p></p>
                                 </div>
                             </div>
                         </div>
@@ -81,7 +109,7 @@
                 </div>
                 <div class="pb-5 pt-3">
                     <button type="submit" class="btn btn-primary">Update</button>
-                    <a href="{{route('categories.index')}}" class="btn btn-outline-dark ml-3">Cancel</a>
+                    <a href="{{route('coupons.index')}}" class="btn btn-outline-dark ml-3">Cancel</a>
                 </div>
             </form>
         </div>
@@ -92,46 +120,81 @@
 
 @section('customJs')
 	<script>
+        $(document).ready(function(){
+            $('#starts_at').datetimepicker({
+                // options here
+                format:'Y-m-d H:i:s',
+            });
 
-		$("#categoryForm").submit(function(event){
+            $('#expires_at').datetimepicker({
+                // options here
+                format:'Y-m-d H:i:s',
+            });
+        });
+
+		$("#discountForm").submit(function(event){
             event.preventDefault();
             var element = $(this);
+            $("button[type=submit]").prop('disabled',true);
             $.ajax({
-                url: '{{route("categories.update",$category->id)}}',
-                type: 'put',
+                url: '{{route("coupons.update",$coupon->id)}}',
+                type: 'PUT',
                 data: element.serializeArray(),
                 dataType: 'json',
                 success:function(response){
-
+                    $("button[type=submit]").prop('disabled',false);
                     if(response["status"]== true){
-                        window.location.href="{{route('categories.index')}}"
-                        $("#name").removeClass('is-invalid')
+                        window.location.href="{{route('coupons.index')}}"
+                        $("#code").removeClass('is-invalid')
                             .siblings('p')
                             .removeClass('invalid-feedback').html("");
-                        $("#slug").removeClass('is-invalid')
+                        $("#discount_amount").removeClass('is-invalid')
+                            .siblings('p')
+                            .removeClass('invalid-feedback').html("");
+                        $("#starts_at").removeClass('is-invalid')
+                            .siblings('p')
+                            .removeClass('invalid-feedback').html("");
+                        $("#expires_at").removeClass('is-invalid')
                             .siblings('p')
                             .removeClass('invalid-feedback').html("");
                     }else{
-                        // if(response["notFound"]){
-                        //     window.location.href="{{route('categories.index')}}"
-                        // }
                         var errors = response['errors']
-                        if(errors['name']){
-                            $("#name").addClass('is-invalid')
+                        if(errors['code']){
+                            $("#code").addClass('is-invalid')
                             .siblings('p')
-                            .addClass('invalid-feedback').html(errors['name']);
+                            .addClass('invalid-feedback').html(errors['code']);
                         }else{
-                            $("#name").removeClass('is-invalid')
+                            $("#code").removeClass('is-invalid')
                             .siblings('p')
                             .removeClass('invalid-feedback').html("");
                         }
 
-                        if(errors['slug']){
-                            $("#slug").addClass('is-invalid')
+                        if(errors['discount_amount']){
+                            $("#discount_amount").addClass('is-invalid')
                             .siblings('p')
-                            .addClass('invalid-feedback').html(errors['slug']);
+                            .addClass('invalid-feedback').html(errors['discount_amount']);
                         }else{
-                            $("#slug").removeClass('is-invalid')
+                            $("#discount_amount").removeClass('is-invalid')
+                            .siblings('p')
+                            .removeClass('invalid-feedback').html("");
+                        }
+
+                        if(errors['starts_at']){
+                            $("#starts_at").addClass('is-invalid')
+                            .siblings('p')
+                            .addClass('invalid-feedback').html(errors['starts_at']);
+                        }else{
+                            $("#starts_at").removeClass('is-invalid')
+                            .siblings('p')
+                            .removeClass('invalid-feedback').html("");
+                        }
+
+                        if(errors['expires_at']){
+                            $("#expires_at").addClass('is-invalid')
+                            .siblings('p')
+                            .addClass('invalid-feedback').html(errors['expires_at']);
+                        }else{
+                            $("#expires_at").removeClass('is-invalid')
                             .siblings('p')
                             .removeClass('invalid-feedback').html("");
                         }
@@ -143,41 +206,7 @@
             })
         });
 
-        $("#name").on('input', function(){
-            element = $(this);
-            $.ajax({
-                url: '{{route("getSlug")}}',
-                type: 'get',
-                data: {title: element.val()},
-                dataType: 'json',
-                success:function(response){
-                    if(response["status"]==true){
-                        $("#slug").val(response["slug"]);
-                    }
-                }
-            });
-        });
-        Dropzone.autoDiscover = false;
-        const dropzone = $("#image").dropzone({
-            init: function() {
-                this.on('addedfile', function(file) {
-                    if (this.files.length > 1) {
-                        this.removeFile(this.files[0]);
-                    }
-                });
-            },
-            url:  '{{ route("temp-images.create") }}',
-            maxFiles: 1,
-            paramName: 'image',
-            addRemoveLinks: true,
-            acceptedFiles: "image/jpeg,image/png,image/gif",
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }, success: function(file, response){
-                $("#image_id").val(response.image_id);
-                //console.log(response)
-            }
-        });
+
 
 	</script>
 @endsection

@@ -44,6 +44,8 @@ Route::get('/checkout', [CartController::class, 'checkout'])->name('front.checko
 Route::post('/process-checkout', [CartController::class, 'processCheckout'])->name('front.processCheckout');
 Route::get('/thanks/{orderId}', [CartController::class, 'thankyou'])->name('front.thankyou');
 Route::post('/get-order-summery', [CartController::class, 'getOrderSummary'])->name('front.getOrderSummary');
+Route::post('/apply-discount', [CartController::class, 'applyDiscount'])->name('front.applyDicount');
+Route::post('/remove-dicount', [CartController::class, 'removeCoupon'])->name('front.removeCoupon');
 
 Route::group(['prefix'=>'account'],function(){
 
@@ -58,6 +60,8 @@ Route::group(['prefix'=>'account'],function(){
 
     Route::group(['middleware'=>'auth'],function(){
         Route::get('/profile', [AuthController::class, 'profile'])->name('account.profile');
+        Route::get('/my-orders', [AuthController::class, 'orders'])->name('account.orders');
+        Route::get('/order-detail/{orderId}', [AuthController::class, 'OrderDetail'])->name('account.OrderDetail');
         Route::get('/logout', [AuthController::class, 'logout'])->name('account.logout');
     });
 

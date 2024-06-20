@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\OrderItems;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -90,5 +92,27 @@ class AuthController extends Controller
         Auth::logout();
         session()->flash('login-success','You have been logout successfully');
         return redirect()->route('account.login');
+    }
+    public function orders(){
+
+        $user = Auth::user();
+
+        $orders = Order::where('user_id',$user->id)->orderBy('created_at','DESC')->get();
+
+        $data['orders'] = $orders;
+
+        return view('front.account.order',$data);
+    }
+
+    public function OrderDetail($id){
+        $user = Auth::user();
+
+        $order = Order::where('user_id',$user->id)->where('id',$id)->first();
+        $orderItems = OrderItems::where('order_id',$id)->get();
+
+        $data['order'] = $order;
+        $data['orderItems'] = $orderItems;
+
+        return view('front.account.order-detail',$data);
     }
 }
