@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->enum('payment_status',['paid','not paid'])->after('grand_total')->defaultValue('not paid');
-            $table->enum('status',['pending','shipped','delivered','cancelled'])->after('grand_total')->defaultValue('pending');
+            $table->timestamp('shipped_date')->nullable()->after('status');
         });
     }
 
@@ -22,10 +21,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //drop the old migrations
+        //drop the migration
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn('payment_status');
-            $table->dropColumn('status');
+            $table->dropColumn('shipped_date');
         });
+
     }
 };

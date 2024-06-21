@@ -109,9 +109,11 @@ class AuthController extends Controller
 
         $order = Order::where('user_id',$user->id)->where('id',$id)->first();
         $orderItems = OrderItems::where('order_id',$id)->get();
+        $orderItemsCount = OrderItems::where('order_id',$id)->get()->count();
 
         $data['order'] = $order;
         $data['orderItems'] = $orderItems;
+        $data['orderItemsCount'] = $orderItemsCount;
 
         return view('front.account.order-detail',$data);
     }

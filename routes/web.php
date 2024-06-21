@@ -15,6 +15,7 @@ use App\Http\Controllers\admin\ShippingController;
 use App\Http\Controllers\admin\TempImagesController;
 use App\Http\Controllers\admin\SubCategoryController;
 use App\Http\Controllers\admin\DiscountCodeController;
+use App\Http\Controllers\admin\OrderController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ShopController;
@@ -150,6 +151,16 @@ Route::group(['prefix'=>'admin'],function(){
         Route::get('/coupons/{product}/edit', [DiscountCodeController::class, 'edit'])->name('coupons.edit');
         Route::put('/coupons/{product}', [DiscountCodeController::class, 'update'])->name('coupons.update');
         Route::delete('/coupons/{product}', [DiscountCodeController::class, 'destroy'])->name('coupons.delete');
+
+        // orders routes
+        Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{id}', [OrderController::class, 'detail'])->name('orders.detail');
+        Route::post('/orders/change-status/{id}', [OrderController::class, 'changeOrderStatusForm'])->name('orders.changeOrderStatusForm');
+        Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+        Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
+        Route::delete('/orders/{id}', [OrderController::class, 'destroy'])->name('orders.delete');
 
 
         //get slug to input when slug form is empty
