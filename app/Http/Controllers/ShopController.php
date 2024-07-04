@@ -43,7 +43,12 @@ class ShopController extends Controller
             }
         }
 
-        if($request->get('sort')){
+        // dd($categories = Category::latest());
+        if(!empty($request->get('search'))){
+            $products = $products->where('title','like','%'. $request->get('search'). '%');
+        }
+
+        if($request->get('sort') != ''){
             if($request->get('sort')=='lateset'){
                 $products = $products->orderBy('id', 'DESC');
             }else if($request->get('sort')=='price_asc'){
@@ -80,7 +85,7 @@ class ShopController extends Controller
         $relatedProucts = [];
         if($product->related_products!=''){
             $productArray = explode(',',$product->related_products);
-            $relatedProucts = Product::whereIn('id',$productArray)->get();
+            $relatedProucts = Product::whereIn('id',$productArray)->where('status',1)->get();
         }
 
         $data['product'] = $product;

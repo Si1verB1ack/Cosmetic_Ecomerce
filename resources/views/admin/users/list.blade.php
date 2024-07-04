@@ -6,11 +6,11 @@
         <div class="container-fluid my-2">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1>orders</h1>
+                    <h1>Users</h1>
                 </div>
-                {{-- <div class="col-sm-6 text-right">
-                    <a href="{{route('orders.create')}}" class="btn btn-primary">New Category</a>
-                </div> --}}
+                <div class="col-sm-6 text-right">
+                    <a href="{{route('users.create')}}" class="btn btn-primary">New User</a>
+                </div>
             </div>
         </div>
         <!-- /.container-fluid -->
@@ -24,7 +24,7 @@
                 <form action="" method="get">
                     <div class="card-header">
                         <div class="card-title">
-                            <button type="button" onclick="window.location.href='{{route('orders.index')}}'" class="btn btn-default btn-sm">
+                            <button type="button" onclick="window.location.href='{{route('users.index')}}'" class="btn btn-default btn-sm">
                                 Reset
                             </button>
                         </div>
@@ -45,36 +45,46 @@
                     <table class="table table-hover text-nowrap">
                         <thead>
                             <tr>
-                                <th>Orders #</th>
-                                <th>Customer</th>
+                                <th width="60">ID</th>
+                                <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
-                                <th>Status</th>
-                                <th>Total</th>
-                                <th>Date Purchased</th>
+                                <th width="100">Status</th>
+                                <th width="100">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                                @if($orders->isNotEmpty())
-                                    @foreach ($orders as $order)
+                                @if($users->isNotEmpty())
+                                    @foreach ($users as $user)
                                         <tr>
-                                            <td><a href="{{route('orders.detail',[$order->id])}}">{{ $order->id }}</a></td>
-                                            <td>{{ $order->name }}</td>
-                                            <td>{{ $order->email }}</td>
-                                            <td>{{ $order->mobile }}</td>
+                                            <td>{{ $user->id }}</td>
+                                            <td>{{ $user->name }}</td>
+                                            <td>{{ $user->email }}</td>
+                                            <td>{{ $user->phone }}</td>
                                             <td>
-                                                @if ($order->status == 'pending')
-                                                <span class="badge bg-danger">Pending</span>
-                                                @elseif($order->status == 'shipped')
-                                                    <span class="badge bg-info">Shipped</span>
-                                                @elseif ($order->status == 'delivered')
-                                                    <span class="badge bg-success">Delivered</span>
+                                                @if ($user->status==1)
+                                                    <svg class="text-success-500 h-6 w-6 text-success ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"  width="25" height="25">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
                                                 @else
-                                                    <span class="badge bg-danger">cancelLed</span>
+                                                    <svg class="text-danger h-6 w-6 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true" width="25" height="25">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
                                                 @endif
+
                                             </td>
-                                            <td>${{ number_format($order->grand_total,2) }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($order->created_at)->format('d-M-Y') }}</td>
+                                            <td >
+                                                <a href="{{route('users.edit',$user->id)}}">
+                                                    <svg class="filament-link-icon w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="30" height="30" style="border-right: 1px solid #0066ff; margin-left: -5px;">
+                                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                                                    </svg>
+                                                </a>
+                                                <a href="#" onclick="deleteUser({{$user->id}})" class="text-danger w-4 h-4">
+                                                    <svg wire:loading.remove.delay="" wire:target="" class="filament-link-icon w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="30" height="30">
+                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                </a>
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @else
@@ -86,7 +96,7 @@
                     </table>
                 </div>
                 <div class="card-footer clearfix">
-                    {{$orders->links()}}
+                    {{$users->links()}}
                     {{-- <ul class="pagination pagination m-0 float-right">
                       <li class="page-item"><a class="page-link" href="#">«</a></li>
                       <li class="page-item"><a class="page-link" href="#">1</a></li>
@@ -102,10 +112,10 @@
     <!-- /.content -->
 @endsection
 
-{{-- @section('customJs')
+@section('customJs')
     <script>
-        function deleteCategory(id){
-            var url = '{{route("orders.delete","ID")}}'
+        function deleteUser(id){
+            var url = '{{route("users.delete","ID")}}'
             var newUrl = url.replace("ID",id)
 
             Swal.fire({
@@ -126,24 +136,24 @@
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
                     // Swal.fire("Saved!", "", "success");
-                        $.ajax({
+                    $.ajax({
                         url: newUrl,
                         type:'delete',
                         data:{},
                         dataType: 'json',
                         headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(response){
-                                if(response["status"]){
-                                    window.location.href="{{route('orders.index')}}"
-                                }
-                            }
+                            // if(response["status"]){
+                                window.location.href="{{route('users.index')}}"
+                            // }
+                        }
                     });
                 } else if (result.isDenied) {
                     Swal.fire("deletion cancel  ", "", "error");
                 }
-            });
+                });
         }
     </script>
-@endsection --}}
+@endsection

@@ -138,12 +138,12 @@
         $('.add').click(function(){
             var qtyElement = $(this).parent().prev(); // Qty Input
             var qtyValue = parseInt(qtyElement.val());
-            if (qtyValue < 10) {
+            // if (qtyValue < 10) {
                 qtyElement.val(qtyValue+1);
                 var rowId= $(this).data('id');
                 var newQty = qtyElement.val();
                 updateCart(rowId,newQty)
-            }
+            // }
         });
 
         $('.sub').click(function(){

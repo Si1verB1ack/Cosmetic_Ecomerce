@@ -74,6 +74,7 @@
     </section>
     <section class="section-2">
         <div class="container">
+            @include('admin.message')
             <div class="row">
                 <div class="col-lg-3">
                     <div class="box shadow-lg">
@@ -158,12 +159,24 @@
                                                 src="{{ asset('admin-assets/img/default-150x150.png') }}">
                                         @endif
                                     </a>
-                                        <a class="whishlist" href="222"><i class="far fa-heart"></i></a>
+                                        <a onclick="addToWishlist({{$product->id}})" class="whishlist" href="javascript:void(0);"><i class="far fa-heart"></i></a>
 
                                         <div class="product-action">
-                                            <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
-                                                <i class="fa fa-shopping-cart"></i> Add To Cart
-                                            </a>
+                                            @if ($product->track_qty =='Yes')
+                                                @if ($product->qty > 0)
+                                                    <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                                        <i class="fa fa-shopping-cart"></i> Add To Cart
+                                                    </a>
+                                                @else
+                                                    <a class="btn btn-dark" href="javascript:void(0);">
+                                                        Out Of Stock
+                                                    </a>
+                                                @endif
+                                            @else
+                                                <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                                    <i class="fa fa-shopping-cart"></i> Add To Cart
+                                                </a>
+                                            @endif
                                         </div>
                                 </div>
                                 <div class="card-body text-center mt-3">
@@ -206,12 +219,24 @@
                                             <img src="{{ asset('admin-assets/img/default-150x150.png') }}">
                                         @endif
                                     </a>
-                                        <a class="whishlist" href="222"><i class="far fa-heart"></i></a>
+                                    <a onclick="addToWishlist({{$product->id}})" class="whishlist" href="javascript:void(0);"><i class="far fa-heart"></i></a>
 
                                         <div class="product-action">
-                                            <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
-                                                <i class="fa fa-shopping-cart"></i> Add To Cart
-                                            </a>
+                                            @if ($product->track_qty =='Yes')
+                                                @if ($product->qty > 0)
+                                                    <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                                        <i class="fa fa-shopping-cart"></i> Add To Cart
+                                                    </a>
+                                                @else
+                                                    <a class="btn btn-dark" href="javascript:void(0);">
+                                                        Out Of Stock
+                                                    </a>
+                                                @endif
+                                            @else
+                                                <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                                    <i class="fa fa-shopping-cart"></i> Add To Cart
+                                                </a>
+                                            @endif
                                         </div>
                                 </div>
                                 <div class="card-body text-center mt-3">

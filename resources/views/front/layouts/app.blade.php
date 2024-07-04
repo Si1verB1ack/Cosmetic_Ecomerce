@@ -45,8 +45,10 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;500&family=Raleway:ital,wght@0,400;0,600;0,800;1,200&family=Roboto+Condensed:wght@400;700&family=Roboto:wght@300;400;700;900&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <meta name="csrf-token" content="{{csrf_token()}}">
+
 </head>
 
 <body data-instant-intensity="mousedown">
@@ -66,13 +68,13 @@
                     @else
                         <a href="{{route('account.login')}}" class="nav-link text-dark">My Account</a>
                     @endif
-                    <form action="">
+                    <form action="{{route('front.shop')}}" method="get">
                         <div class="input-group">
-                            <input type="text" placeholder="Search For Products" class="form-control"
+                            <input value="{{Request::get('search')}}" type="text" placeholder="Search For Products" class="form-control" name="search" id="search"
                                 aria-label="Amount (to the nearest dollar)">
-                            <span class="input-group-text">
+                            <button type="submit" class="input-group-text">
                                 <i class="fa fa-search"></i>
-                            </span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -229,6 +231,7 @@
             </div>
         </div>
     </footer>
+
     <script src="{{ asset('front-assets/js/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ asset('front-assets/js/bootstrap.bundle.5.1.3.min.js') }}"></script>
     <script src="{{ asset('front-assets/js/instantpages.5.1.0.min.js') }}"></script>
@@ -271,10 +274,37 @@
                     }
                 }
             });
-        }
+        };
+
+        function addToWishlist(id){
+            $.ajax({
+                url: "{{ route('front.addToWishlist') }}",
+                type: "POST",
+                data: {id: id},
+                dataType: "json",
+                success: function (response) {
+                    if(response.status== true){
+                        Swal.fire({
+                            title: "Added to Wishlist!",
+                            text: response.message,
+                            imageUrl: response.image_url,
+                            imageWidth: 150,
+                            imageHeight: 150,
+                            imageAlt: "Product Image",
+                            customClass: {
+                                popup: 'my-swal-popup'
+                            }
+                        });
+                    }else{
+                        window.location.href = "{{route('account.login')}}";
+                    }
+                }
+            });
+        };
+
     </script>
 
-    @yield('customJs')
+@yield('customJs')
 </body>
 
 </html>

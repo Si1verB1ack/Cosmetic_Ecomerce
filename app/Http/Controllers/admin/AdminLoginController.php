@@ -12,31 +12,36 @@ class AdminLoginController extends Controller
     public function index(){
         return view('admin.login');
     }
+
     public function authenticate(Request $request){
         $validator = Validator::make($request->all(),[
             'email'=>'required|email',
             'password'=>'required',
         ]);
-        if($validator->passes()){
-            if(Auth::guard('admin')->attempt(['email'=>$request->email,
-            'password'=>$request->password], $request->get('remember'))){
-                $admin =Auth::guard('admin')->user();
-                if($admin->role==2){
-                    session(['logged_in' => true]);
-                    return redirect()->route('admin.dashboard')->with('loginsuccess','');
-                }else{
-                    Auth::guard('admin')->logout();
-                    return redirect()->route('admin.login')->with('error','You are not authorize')->withInput($request->only('email'));
-                }
-            }else{
-                $email = $request->email;
-                return redirect()->route('admin.login')->with('error','You are not authorize')->withInput($request->only('email'));
-            }
 
-        }else{
+        if($validator->passes()){
+            if(Auth::guard('admin')->attempt([
+                'email' => $request->email,
+                'password' => $request->password
+            ], $request->get('remember'))){
+
+                $admin = Auth::guard('admin')->user();
+                if($admin->role == 2){
+                    session()->flash('login-success', 'Welcome back to Admin ' . $admin->name);
+                    return redirect()->route('admin.dashboard');
+                } else {
+                    Auth::guard('admin')->logout();
+                    return redirect()->route('admin.login')->with('error', 'You are not authorized')->withInput($request->only('email'));
+                }
+            } else {
+                return redirect()->route('admin.login')->with('error', 'Invalid login credentials')->withInput($request->only('email'));
+            }
+        } else {
             return redirect()->route('admin.login')
                 ->withErrors($validator)
                 ->withInput($request->only('email'));
         }
     }
 }
+
+

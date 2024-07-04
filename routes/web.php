@@ -16,6 +16,7 @@ use App\Http\Controllers\admin\TempImagesController;
 use App\Http\Controllers\admin\SubCategoryController;
 use App\Http\Controllers\admin\DiscountCodeController;
 use App\Http\Controllers\admin\OrderController;
+use App\Http\Controllers\admin\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ShopController;
@@ -34,6 +35,8 @@ use Illuminate\Support\Str;
 |
 */
 
+
+
 Route::get('/', [FrontController::class, 'index'])->name('front.home');
 Route::get('/shop/{categorySlug?}/{subCategorySlug?}', [ShopController::class, 'index'])->name('front.shop');
 Route::get('/product/{slug}', [ShopController::class, 'product'])->name('front.product');
@@ -47,6 +50,7 @@ Route::get('/thanks/{orderId}', [CartController::class, 'thankyou'])->name('fron
 Route::post('/get-order-summery', [CartController::class, 'getOrderSummary'])->name('front.getOrderSummary');
 Route::post('/apply-discount', [CartController::class, 'applyDiscount'])->name('front.applyDicount');
 Route::post('/remove-dicount', [CartController::class, 'removeCoupon'])->name('front.removeCoupon');
+Route::post('/add-to-wishlist', [FrontController::class, 'addToWishlist'])->name('front.addToWishlist');
 
 Route::group(['prefix'=>'account'],function(){
 
@@ -61,7 +65,11 @@ Route::group(['prefix'=>'account'],function(){
 
     Route::group(['middleware'=>'auth'],function(){
         Route::get('/profile', [AuthController::class, 'profile'])->name('account.profile');
+        Route::post('/update-profile', [AuthController::class, 'updateProfile'])->name('account.updateProfile');
+        Route::post('/update-address', [AuthController::class, 'updateAddress'])->name('account.updateAddress');
         Route::get('/my-orders', [AuthController::class, 'orders'])->name('account.orders');
+        Route::get('/my-wishlist', [AuthController::class, 'wishlist'])->name('account.wishlist');
+        Route::post('/remove-product-from-wishlist', [AuthController::class, 'removeProductFromWishlist'])->name('account.removeProductFromWishlist');
         Route::get('/order-detail/{orderId}', [AuthController::class, 'OrderDetail'])->name('account.OrderDetail');
         Route::get('/logout', [AuthController::class, 'logout'])->name('account.logout');
     });
@@ -153,14 +161,23 @@ Route::group(['prefix'=>'admin'],function(){
         Route::delete('/coupons/{product}', [DiscountCodeController::class, 'destroy'])->name('coupons.delete');
 
         // orders routes
-        Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
-        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        // Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+        // Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{id}', [OrderController::class, 'detail'])->name('orders.detail');
         Route::post('/orders/change-status/{id}', [OrderController::class, 'changeOrderStatusForm'])->name('orders.changeOrderStatusForm');
-        Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
-        Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
-        Route::delete('/orders/{id}', [OrderController::class, 'destroy'])->name('orders.delete');
+        Route::post('/orders/send-email/{id}', [OrderController::class, 'sendInvoiceEmail'])->name('orders.sendInvoiceEmail');
+        // Route::get('/orders/{id}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+        // Route::put('/orders/{id}', [OrderController::class, 'update'])->name('orders.update');
+        // Route::delete('/orders/{id}', [OrderController::class, 'destroy'])->name('orders.delete');
+
+        // user Route
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.delete');
 
 
         //get slug to input when slug form is empty

@@ -3,15 +3,6 @@
 @section('content')
 
 @include('admin.message')
-{{-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-@if(Session::has('loginsuccess'))
-    <script>
-        Swal.fire({
-        title: "Welcome Admin",
-        icon: "success"
-        });
-    </script>
-@endif --}}
 
 	<!-- Content Header (Page header) -->
 	<section class="content-header">

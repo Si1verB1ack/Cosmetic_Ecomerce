@@ -13,6 +13,7 @@
 @endif
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 @if(Session::has('create-success'))
     <script>
         Swal.fire({
@@ -52,7 +53,6 @@
 @endif
 
 @if(Session::has('not-found'))
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         Swal.fire({
             position: "top-end",
@@ -66,9 +66,20 @@
 
 @if(Session::has('login-success'))
     <script>
-        Swal.fire({
-        title: "{{Session::get('login-success')}}",
-        icon: "success"
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+        }
+        });
+        Toast.fire({
+            icon: "success",
+            title: "{{Session::get('login-success')}}"
         });
     </script>
 @endif

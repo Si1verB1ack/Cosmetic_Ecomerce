@@ -81,6 +81,7 @@
                                             <td>${{number_format($item->total,2)}}</td>
                                         </tr>
                                     @endforeach
+                                    <tr>
                                         <th colspan="3" class="text-right">Subtotal:</th>
                                         <td>${{number_format($order->subtotal,2)}}</td>
                                     </tr>
@@ -128,16 +129,18 @@
                     </div>
                     <div class="card">
                         <div class="card-body">
-                            <h2 class="h4 mb-3">Send Inovice Email</h2>
-                            <div class="mb-3">
-                                <select name="status" id="status" class="form-control">
-                                    <option value="">Customer</option>
-                                    <option value="">Admin</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <button class="btn btn-primary">Send</button>
-                            </div>
+                            <form action="" method="POST" name="sendInvoiceEmail" id="sendInvoiceEmail">
+                                <h2 class="h4 mb-3">Send Inovice Email</h2>
+                                <div class="mb-3">
+                                    <select name="userType" id="userType" class="form-control">
+                                        <option value="customer">Customer</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -168,63 +171,22 @@
                 success:function(response){
                     $("button[type=submit]").prop('disabled',false);
                      window.location.href="{{route('orders.detail',$order->id)}}"
-                    // if(response["status"]== true){
-                    //     window.location.href="{{route('coupons.index')}}"
-                    //     $("#code").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     $("#discount_amount").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     $("#starts_at").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     $("#expires_at").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    // }else{
-                    //     var errors = response['errors']
-                    //     if(errors['code']){
-                    //         $("#code").addClass('is-invalid')
-                    //         .siblings('p')
-                    //         .addClass('invalid-feedback').html(errors['code']);
-                    //     }else{
-                    //         $("#code").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     }
+                }
+            })
+        });
 
-                    //     if(errors['discount_amount']){
-                    //         $("#discount_amount").addClass('is-invalid')
-                    //         .siblings('p')
-                    //         .addClass('invalid-feedback').html(errors['discount_amount']);
-                    //     }else{
-                    //         $("#discount_amount").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     }
-
-                    //     if(errors['starts_at']){
-                    //         $("#starts_at").addClass('is-invalid')
-                    //         .siblings('p')
-                    //         .addClass('invalid-feedback').html(errors['starts_at']);
-                    //     }else{
-                    //         $("#starts_at").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     }
-
-                    //     if(errors['expires_at']){
-                    //         $("#expires_at").addClass('is-invalid')
-                    //         .siblings('p')
-                    //         .addClass('invalid-feedback').html(errors['expires_at']);
-                    //     }else{
-                    //         $("#expires_at").removeClass('is-invalid')
-                    //         .siblings('p')
-                    //         .removeClass('invalid-feedback').html("");
-                    //     }
-                    // }
-
+        $("#sendInvoiceEmail").submit(function(event){
+            event.preventDefault();
+            var element = $(this);
+            $("button[type=submit]").prop('disabled',true);
+            $.ajax({
+                url: '{{route("orders.sendInvoiceEmail",$order->id)}}',
+                type: 'post',
+                data: element.serializeArray(),
+                dataType: 'json',
+                success:function(response){
+                    $("button[type=submit]").prop('disabled',false);
+                     window.location.href="{{route('orders.detail',$order->id)}}"
                 }
             })
         });

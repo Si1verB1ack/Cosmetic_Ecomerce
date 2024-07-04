@@ -46,6 +46,7 @@
                                         <option {{($brands->status==0)? 'selected' :''}}
                                             value="0">Block</option>
                                     </select>
+                                    <p></p>
                                 </div>
                             </div>
                         </div>

@@ -90,11 +90,11 @@ class CartController extends Controller
                 Cart::update($rowId,$qty);
                 $message = 'Cart updated successfully';
                 $status = true;
-                session()->flash("success",$message);
+                session()->flash("add-success",$message);
 
             }else{
 
-                $message = 'Request qty('.$qty.') is not available in stock';
+                $message = 'Product:'.$product->title.' quantity('.$qty.'). is not available in stock';
                 $status = false;
                 session()->flash("error",$message);
 
@@ -156,7 +156,7 @@ class CartController extends Controller
             if(!session()->has('url.intended')){
                 session(['url.intended' => url()->current()]);
             }
-
+            // return session()->has('url.intended');
             return redirect()->route('account.login');
         }
 
@@ -336,7 +336,15 @@ class CartController extends Controller
                 $orderItem->price = $item->price;
                 $orderItem->total = $item->price*$item->qty;
                 $orderItem->save();
+
+                $productData = Product::find($item->id);
+                if($productData->track_qty=='Yes'){
+                    $productData->qty = $productData->qty - $item->qty;
+                    $productData->save();
+                }
             }
+            orderEmail($order->id,'customer');
+
             session()->flash('create-success','You have successfully placed your order');
 
             Cart::destroy();
