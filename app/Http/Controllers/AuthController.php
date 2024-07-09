@@ -244,4 +244,8 @@ class AuthController extends Controller
             ]);
         }
     }
+
+    public function changePassword(){
+
+    }
 }
