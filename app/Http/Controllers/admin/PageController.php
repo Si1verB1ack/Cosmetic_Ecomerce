@@ -70,17 +70,17 @@ class PageController extends Controller
 
         if ($validator->passes()) {
 
-            $page = Page::where('id',$id);
+            $page = Page::find($id);
             $page->name = $request->name;
             $page->slug = $request->slug;
             $page->content = $request->content;
             $page->save();
 
-            session()->flash('create-success','Page created successfully');
+            session()->flash('create-success','Page update successfully');
 
             return response()->json([
                 'status' => true,
-                'message'=> 'Page created successfully'
+                'message'=> 'Page update successfully'
             ]);
 
         } else {
@@ -93,7 +93,20 @@ class PageController extends Controller
     }
 
     public function destroy($id, Request $request){
+        $page = Page::find($id);
+        if(empty($page)){
+            session()->flash("not-found","Record not found");
+            return redirect()->route('admin.pages.index');
+        }
 
+        $page->delete();
+
+        session()->flash('delete-success','Page delete successfully');
+
+        return response()->json([
+            'status' => true,
+            'message'=> 'Page delete successfully'
+        ]);
     }
 
 
