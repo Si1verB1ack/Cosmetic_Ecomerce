@@ -17,6 +17,7 @@ use App\Http\Controllers\admin\SubCategoryController;
 use App\Http\Controllers\admin\DiscountCodeController;
 use App\Http\Controllers\admin\OrderController;
 use App\Http\Controllers\admin\UserController;
+use App\Http\Controllers\admin\PageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ShopController;
@@ -178,6 +179,14 @@ Route::group(['prefix'=>'admin'],function(){
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.delete');
+
+        // pages Route
+        Route::get('/pages/create', [PageController::class, 'create'])->name('pages.create');
+        Route::post('/pages', [PageController::class, 'store'])->name('pages.store');
+        Route::get('/pages', [PageController::class, 'index'])->name('pages.index');
+        Route::get('/pages/{user}/edit', [PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/pages/{user}', [PageController::class, 'update'])->name('pages.update');
+        Route::delete('/pages/{user}', [PageController::class, 'destroy'])->name('pages.delete');
 
 
         //get slug to input when slug form is empty
