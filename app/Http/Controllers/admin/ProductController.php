@@ -53,7 +53,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $facebookPostController = new FacebookPostController();
+        $facebookController = new FacebookPostController();
 
         // dd($request->image_array);
         // exit();
@@ -121,6 +121,7 @@ class ProductController extends Controller
 
                     //small image
                     $destPath = public_path() . '/uploads/product/small/' . $imageName;
+                    // $forfb = 'http://localhost/uploads/product/small/' . $imageName;
                     $image = $manager->read($sourcePath);
                     $image->scale(300);
                     $image->save($destPath);
@@ -136,9 +137,16 @@ class ProductController extends Controller
 
                 Mail::to('user@example.com')->send(new NewProductEmail($mailData, $destPath));
 
-                $facebookPostController->create("Check out our new product! + {$request->title} \n Only {$request->price}!!", $destPath);
+                // Call the create method
+                $response = $facebookController->create(
+                    "Check out our new product {$request->title}! Only $ {$request->price}!!",
+                    $destPath
+                );
+            } else {
+                $response = $facebookController->create(
+                    "Check out our new product {$request->title}! Only $ {$request->price}!!"
+                );
             }
-
 
 
 
