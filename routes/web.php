@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FacebookPostController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\admin\AdminLoginController;
@@ -18,9 +19,14 @@ use App\Http\Controllers\admin\DiscountCodeController;
 use App\Http\Controllers\admin\OrderController;
 use App\Http\Controllers\admin\UserController;
 use App\Http\Controllers\admin\PageController;
+use App\Http\Controllers\admin\SettingController;
+use App\Http\Controllers\admin\ProductVariantController;
+use App\Http\Controllers\admin\Product;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\PayPalController;
+use App\Http\Controllers\StripeController;
 use App\Models\Brands;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -41,6 +47,7 @@ use Illuminate\Support\Str;
 Route::get('/', [FrontController::class, 'index'])->name('front.home');
 Route::get('/shop/{categorySlug?}/{subCategorySlug?}', [ShopController::class, 'index'])->name('front.shop');
 Route::get('/product/{slug}', [ShopController::class, 'product'])->name('front.product');
+Route::get('/product/{slug}/variant', [ShopController::class, 'getVariantDetails'])->name('product.variant.details');
 Route::get('/cart', [CartController::class, 'cart'])->name('front.cart');
 Route::post('/add-to-cart', [CartController::class, 'addToCart'])->name('front.addToCart');
 Route::post('/update-cart', [CartController::class, 'updateCart'])->name('front.updateCart');
@@ -53,30 +60,54 @@ Route::post('/apply-discount', [CartController::class, 'applyDiscount'])->name('
 Route::post('/remove-dicount', [CartController::class, 'removeCoupon'])->name('front.removeCoupon');
 Route::post('/add-to-wishlist', [FrontController::class, 'addToWishlist'])->name('front.addToWishlist');
 Route::get('/page/{slug}', [FrontController::class, 'page'])->name('front.page');
+Route::post('/send-contact-email', [FrontController::class, 'sendContactEmail'])->name('front.sendContactEmail');
 
-Route::group(['prefix'=>'account'],function(){
+//reset forgetted user password
+Route::get('/forget-password', [AuthController::class, 'forgetPassword'])->name('front.forgetPassword');
+Route::post('/process-forget-password', [AuthController::class, 'processForgetPassword'])->name('front.processForgetPassword');
+Route::get('/reset-password/{token}', [AuthController::class, 'resetPassword'])->name('front.resetPassword');
+Route::post('/process-reset-password', [AuthController::class, 'processResetPassword'])->name('front.processResetPassword');
+Route::post('/save-rating', [ShopController::class, 'saveRating'])->name('front.saveRating');
 
-    Route::group(['middleware'=>'guest'],function(){
+//facebook
+// routes/web.php
+Route::post('/facebook-post', [FacebookPostController::class, 'create']);
+
+
+
+//payment
+//paypal
+Route::get('/create/{amount}', [PayPalController::class, 'create']);
+Route::post('/complete', [PayPalController::class, 'complete']);
+//stripe
+Route::post('/create-checkout-session', [StripeController::class, 'create']);
+Route::get('/stripe-success/return', [StripeController::class, 'success'])->name('stripe_success');
+
+
+
+Route::group(['prefix' => 'account'], function () {
+
+    Route::group(['middleware' => 'guest'], function () {
         Route::get('/register', [AuthController::class, 'register'])->name('account.register');
         Route::post('/process-register', [AuthController::class, 'processRegister'])->name('account.processRegister');
 
         Route::get('/login', [AuthController::class, 'login'])->name('account.login');
         Route::post('/login', [AuthController::class, 'authenticate'])->name('account.authenticate');
-
     });
 
-    Route::group(['middleware'=>'auth'],function(){
+    Route::group(['middleware' => 'auth'], function () {
         Route::get('/profile', [AuthController::class, 'profile'])->name('account.profile');
         Route::post('/update-profile', [AuthController::class, 'updateProfile'])->name('account.updateProfile');
         Route::post('/update-address', [AuthController::class, 'updateAddress'])->name('account.updateAddress');
+        Route::get('/change-password', [AuthController::class, 'showChangePassword'])->name('account.showChangePassword');
+        Route::post('/update-password', [AuthController::class, 'updatePassword'])->name('account.updatePassword');
+
         Route::get('/my-orders', [AuthController::class, 'orders'])->name('account.orders');
         Route::get('/my-wishlist', [AuthController::class, 'wishlist'])->name('account.wishlist');
         Route::post('/remove-product-from-wishlist', [AuthController::class, 'removeProductFromWishlist'])->name('account.removeProductFromWishlist');
         Route::get('/order-detail/{orderId}', [AuthController::class, 'OrderDetail'])->name('account.OrderDetail');
         Route::get('/logout', [AuthController::class, 'logout'])->name('account.logout');
     });
-
-
 });
 
 
@@ -88,15 +119,15 @@ Route::group(['prefix'=>'account'],function(){
 
 // Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-Route::group(['prefix'=>'admin'],function(){
+Route::group(['prefix' => 'admin'], function () {
 
-    Route::group(['middleware'=>'admin.guest'],function(){
+    Route::group(['middleware' => 'admin.guest'], function () {
 
         Route::get('/login', [AdminLoginController::class, 'index'])->name('admin.login');
         Route::post('/authenticate', [AdminLoginController::class, 'authenticate'])->name('admin.authenticate');
     });
 
-    Route::group(['middleware'=>'admin.auth'],function(){
+    Route::group(['middleware' => 'admin.auth'], function () {
         Route::get('/dashboard', [AdminHomeController::class, 'index'])->name('admin.dashboard');
         Route::get('/logout', [AdminHomeController::class, 'logout'])->name('admin.logout');
 
@@ -132,6 +163,16 @@ Route::group(['prefix'=>'admin'],function(){
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.delete');
         Route::get('get-products', [ProductController::class, 'getProducts'])->name('products.getProducts');
+        Route::get('/ratings', [ProductController::class, 'productRatings'])->name('products.productRatings');
+        Route::get('/change-rating-status', [ProductController::class, 'changeRatingStatus'])->name('products.changeRatingStatus');
+
+
+        //ProductVariant url
+        Route::get('/products/{productId}/variants/create', [ProductVariantController::class, 'create'])->name('product.variants.create');
+        Route::post('/products/{productId}/variants', [ProductVariantController::class, 'store'])->name('product.variants.store');
+        Route::get('/products/{productId}/variants/{variantId}/edit', [ProductVariantController::class, 'edit'])->name('product.variants.edit');
+        Route::post('/products/{productId}/variants/{variantId}', [ProductVariantController::class, 'update'])->name('product.variants.update');
+        Route::delete('/products/{productId}/variants/{variantId}', [ProductVariantController::class, 'destroy'])->name('product.variants.destroy');
 
         // product routes subcategory
         Route::get('/product-subcategories}', [ProductSubCategoryController::class, 'index'])->name('product-subcategories.index');
@@ -149,7 +190,7 @@ Route::group(['prefix'=>'admin'],function(){
         Route::get('/shipping/create', [ShippingController::class, 'create'])->name('shipping.create');
         Route::post('/shipping', [ShippingController::class, 'store'])->name('shipping.store');
         Route::get('/shipping/{id}/edit', [ShippingController::class, 'edit'])->name('shipping.edit');
-        Route::put('/shipping/{id}', [ShippingController::class,'update'])->name('shipping.update');
+        Route::put('/shipping/{id}', [ShippingController::class, 'update'])->name('shipping.update');
         Route::delete('/shipping/{id}', [ShippingController::class, 'destroy'])->name('shipping.delete');
         Route::get('get-shipping', [ShippingController::class, 'getshipping'])->name('shipping.getProducts');
 
@@ -189,19 +230,20 @@ Route::group(['prefix'=>'admin'],function(){
         Route::put('/pages/{user}', [PageController::class, 'update'])->name('pages.update');
         Route::delete('/pages/{user}', [PageController::class, 'destroy'])->name('pages.delete');
 
+        //setting routes
+        Route::get('/change-password', [SettingController::class, 'showChangePassword'])->name('admin.showChangePassword');
+        Route::post('/update-password', [SettingController::class, 'updatePassword'])->name('admin.updatePassword');
 
         //get slug to input when slug form is empty
-        Route::get('/getSlug',function(Request $request){
+        Route::get('/getSlug', function (Request $request) {
             $slug = '';
-            if(!empty($request->title)){
+            if (!empty($request->title)) {
                 $slug = Str::slug($request->title);
             };
             return response()->json([
-                'status'=> true,
+                'status' => true,
                 'slug' => $slug,
             ]);
         })->name('getSlug');
     });
-
 });
-

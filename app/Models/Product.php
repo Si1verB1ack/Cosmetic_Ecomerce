@@ -8,7 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     use HasFactory;
-    public function product_images(){
+    public function product_images()
+    {
         return $this->hasMany(ProductImage::class);
+    }
+
+    public function product_ratings()
+    {
+        return $this->hasMany(ProductRating::class)->where('status', 1);
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
     }
 }

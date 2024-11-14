@@ -97,7 +97,7 @@ class CategoryController extends Controller
                 'notFound' => true,
                 'message'=> 'Record not found'
             ]);
-        }
+        }   
         // if(empty($category)){
 
         //     session()->flash("not-found","Category not found");

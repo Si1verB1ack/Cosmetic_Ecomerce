@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html class="no-js" lang="en_AU">
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Laravel Online Shop</title>
@@ -47,7 +48,9 @@
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <meta name="csrf-token" content="{{csrf_token()}}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    @yield('customCss')
 
 </head>
 
@@ -57,20 +60,21 @@
         <div class="container">
             <div class="row align-items-center py-3 d-none d-lg-flex justify-content-between">
                 <div class="col-lg-4 logo">
-                    <a href="{{route('front.home')}}" class="text-decoration-none">
+                    <a href="{{ route('front.home') }}" class="text-decoration-none">
                         <span class="h1 text-uppercase text-primary bg-dark px-2">Online</span>
                         <span class="h1 text-uppercase text-dark bg-primary px-2 ml-n1">SHOP</span>
                     </a>
                 </div>
                 <div class="col-lg-6 col-6 text-left  d-flex justify-content-end align-items-center">
                     @if (Auth::check())
-                        <a href="{{route('account.profile')}}" class="nav-link text-dark">My Account</a>
+                        <a href="{{ route('account.profile') }}" class="nav-link text-dark">My Account</a>
                     @else
-                        <a href="{{route('account.login')}}" class="nav-link text-dark">My Account</a>
+                        <a href="{{ route('account.login') }}" class="nav-link text-dark">My Account</a>
                     @endif
-                    <form action="{{route('front.shop')}}" method="get">
+                    <form action="{{ route('front.shop') }}" method="get">
                         <div class="input-group">
-                            <input value="{{Request::get('search')}}" type="text" placeholder="Search For Products" class="form-control" name="search" id="search"
+                            <input value="{{ Request::get('search') }}" type="text"
+                                placeholder="Search For Products" class="form-control" name="search" id="search"
                                 aria-label="Amount (to the nearest dollar)">
                             <button type="submit" class="input-group-text">
                                 <i class="fa fa-search"></i>
@@ -111,7 +115,8 @@
                                         <ul class="dropdown-menu dropdown-menu-dark">
                                             @foreach ($category->sub_category as $subCategory)
                                                 <li><a class="dropdown-item nav-link"
-                                                        href="{{route('front.shop',[$category->slug,$subCategory->slug])}}">{{ $subCategory->name }}</a></li>
+                                                        href="{{ route('front.shop', [$category->slug, $subCategory->slug]) }}">{{ $subCategory->name }}</a>
+                                                </li>
                                             @endforeach
                                         </ul>
                                     @endif
@@ -169,7 +174,7 @@
                     </ul>
                 </div>
                 <div class="right-nav py-0">
-                    <a href="{{route('front.cart')}}" class="ml-3 d-flex pt-2">
+                    <a href="{{ route('front.cart') }}" class="ml-3 d-flex pt-2">
                         <i class="fas fa-shopping-cart text-primary"></i>
                     </a>
                 </div>
@@ -200,7 +205,8 @@
                         <ul>
                             @if (staticPages()->isNotEmpty())
                                 @foreach (staticPages() as $page)
-                                    <li><a href="{{route('front.page',$page->slug)}}" title="{{$page->name}}">{{$page->name}}</a></li>
+                                    <li><a href="{{ route('front.page', $page->slug) }}"
+                                            title="{{ $page->name }}">{{ $page->name }}</a></li>
                                 @endforeach
                             @endif
                             {{-- <li><a href="about-us.php" title="About">About</a></li>
@@ -260,35 +266,59 @@
             }
         }
         $.ajaxSetup({
-				headers: {
-					'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-				}
-		});
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
 
-        function addToCart(id){
+        function addToCart(id) {
             $.ajax({
                 url: "{{ route('front.addToCart') }}",
                 type: "POST",
-                data: {id: id},
+                data: {
+                    id: id
+                },
                 dataType: "json",
-                success: function (response) {
-                    if(response.status== true){
-                        window.location.href = "{{route('front.cart')}}";
-                    }else{
-                        window.location.href = "{{route('front.shop')}}";
+                success: function(response) {
+                    if (response.status == true) {
+                        window.location.href = "{{ route('front.cart') }}";
+                    } else {
+                        window.location.href = "{{ route('front.shop') }}";
                     }
                 }
             });
         };
 
-        function addToWishlist(id){
+        function addToCart(id, variant_id) {
+            $.ajax({
+                url: "{{ route('front.addToCart') }}",
+                type: "POST",
+                data: {
+                    id: id,
+                    variant_id: variant_id,
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.status == true) {
+                        window.location.href = "{{ route('front.cart') }}";
+                    } else {
+                        window.location.href = "{{ route('front.shop') }}";
+                    }
+                }
+            });
+        }
+
+
+        function addToWishlist(id) {
             $.ajax({
                 url: "{{ route('front.addToWishlist') }}",
                 type: "POST",
-                data: {id: id},
+                data: {
+                    id: id
+                },
                 dataType: "json",
-                success: function (response) {
-                    if(response.status== true){
+                success: function(response) {
+                    if (response.status == true) {
                         Swal.fire({
                             title: "Added to Wishlist!",
                             text: response.message,
@@ -300,16 +330,15 @@
                                 popup: 'my-swal-popup'
                             }
                         });
-                    }else{
-                        window.location.href = "{{route('account.login')}}";
+                    } else {
+                        window.location.href = "{{ route('account.login') }}";
                     }
                 }
             });
         };
-
     </script>
 
-@yield('customJs')
+    @yield('customJs')
 </body>
 
 </html>

@@ -24,6 +24,7 @@
 
         <link rel="stylesheet" href="{{ asset('admin-assets/css/datetimepicker.css')}}">
 
+        @yield('customCss')
 
         <link rel="stylesheet" href="{{ asset('admin-assets/css/custom.css') }}">
 		<meta name="csrf-token" content="{{csrf_token()}}">
@@ -63,7 +64,7 @@
 								<i class="fas fa-user-cog mr-2"></i> Settings
 							</a>
 							<div class="dropdown-divider"></div>
-							<a href="#" class="dropdown-item">
+							<a href="{{route('admin.showChangePassword')}}" class="dropdown-item">
 								<i class="fas fa-lock mr-2"></i> Change Password
 							</a>
 							<div class="dropdown-divider"></div>

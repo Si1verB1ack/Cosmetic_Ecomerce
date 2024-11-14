@@ -5,27 +5,34 @@ namespace App\Http\Controllers\admin;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\FacebookPostController; // Adjust to the correct namespace
+use App\Mail\NewProductEmail;
 use App\Models\Brands;
 use App\Models\SubCategory;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductRating;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use App\Models\TempImage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+
+
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::latest('id')->with('product_images');
-        if(!empty($request->get('keyword'))){
-            $products = $products->where('title','like','%'. $request->get('keyword'). '%');
+        $products = Product::latest('id')->with(['product_images', 'variants.color', 'variants.size']); // Eager load color and size
+        if (!empty($request->get('keyword'))) {
+            $products = $products->where('title', 'like', '%' . $request->get('keyword') . '%');
         }
         $products = $products->paginate();
         // dd($products);
         $data['products'] = $products;
-        return view('admin.products.list',$data);
+        return view('admin.products.list', $data);
     }
 
     /**
@@ -34,11 +41,11 @@ class ProductController extends Controller
     public function create()
     {
         $data = [];
-        $categories = Category::orderBy('name','ASC')->get();
-        $brands = Brands::orderBy('name','ASC')->get();
+        $categories = Category::orderBy('name', 'ASC')->get();
+        $brands = Brands::orderBy('name', 'ASC')->get();
         $data['categories'] = $categories;
         $data['brands'] = $brands;
-        return view('admin.products.create',$data);
+        return view('admin.products.create', $data);
     }
 
     /**
@@ -46,24 +53,26 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        $facebookPostController = new FacebookPostController();
+
         // dd($request->image_array);
         // exit();
-        $rules=[
-            'title'=> 'required',
-            'slug'=> 'required|unique:products',
-            'price'=> 'required|numeric',
+        $rules = [
+            'title' => 'required',
+            'slug' => 'required|unique:products',
+            'price' => 'required|numeric',
             'sku' => 'required|unique:products',
             'track_qty' => 'required|in:Yes,No',
-            'category'=> 'required|numeric',
+            'category' => 'required|numeric',
             'is_featured' => 'required|in:Yes,No',
             // 'qty' => 'required|numeric',
         ];
 
-        if(!empty($request->track_qty) && $request->track_qty == 'Yes'){
+        if (!empty($request->track_qty) && $request->track_qty == 'Yes') {
             $rules['qty'] = 'required|numeric';
         }
 
-        $validator = Validator::make($request->all(),$rules);
+        $validator = Validator::make($request->all(), $rules);
         if ($validator->passes()) {
             $product = new Product();
             $product->title = $request->title;
@@ -85,51 +94,64 @@ class ProductController extends Controller
             $product->related_products = (!empty($request->related_products) ? implode(',', $request->related_products) : ' ');
             $product->save();
 
-            if(!empty($request->image_array)){
+            if (!empty($request->image_array)) {
                 $manager = new ImageManager(new Driver());
-                foreach($request->image_array as $temp_image_id){
+                foreach ($request->image_array as $temp_image_id) {
                     $tempImageInfo = TempImage::find($temp_image_id);
-                    $extArray =explode('.',$tempImageInfo->name);
+                    $extArray = explode('.', $tempImageInfo->name);
                     $ext = last($extArray);
 
                     $productImage = new ProductImage();
-                    $productImage->product_id=$product->id;
-                    $productImage->image='NULL';
+                    $productImage->product_id = $product->id;
+                    $productImage->image = 'NULL';
                     $productImage->save();
 
-                    $imageName = $product->id.'-'.$productImage->id.'-'.time().'.'.$ext;
+                    $imageName = $product->id . '-' . $productImage->id . '-' . time() . '.' . $ext;
                     $productImage->image = $imageName;
                     $productImage->save();
 
                     //genderate prodcut thumnail
 
                     //large image
-                    $sourcePath = public_path().'/temp/'.$tempImageInfo->name;
-                    $destPath = public_path().'/uploads/product/large/'.$imageName;
+                    $sourcePath = public_path() . '/temp/' . $tempImageInfo->name;
+                    $destPath = public_path() . '/uploads/product/large/' . $imageName;
                     $image = $manager->read($sourcePath);
                     $image->scale(1400);
                     $image->save($destPath);
 
                     //small image
-                    $destPath = public_path().'/uploads/product/small/'.$imageName;
+                    $destPath = public_path() . '/uploads/product/small/' . $imageName;
                     $image = $manager->read($sourcePath);
                     $image->scale(300);
                     $image->save($destPath);
                 }
+
+                $mailData = [
+                    'mail_subject' => 'Check out our new product!',
+                    'name' => $request->title,
+                    'price' => $request->price
+                ];
+
+                // call the api to post to the failbook
+
+                Mail::to('user@example.com')->send(new NewProductEmail($mailData, $destPath));
+
+                $facebookPostController->create("Check out our new product! + {$request->title} \n Only {$request->price}!!", $destPath);
             }
 
 
-            session()->flash('create-success','Product created successfully');
+
+
+            session()->flash('create-success', 'Product created successfully');
 
             return response()->json([
                 'status' => true,
-                'message'=> 'Product created successfully'
+                'message' => 'Product created successfully'
             ]);
-
-        }else{
+        } else {
             return response()->json([
                 'status' => false,
-                'errors'=> $validator->errors()
+                'errors' => $validator->errors()
             ]);
         }
     }
@@ -140,19 +162,19 @@ class ProductController extends Controller
     public function edit($id, Request $request)
     {
         $product = Product::find($id);
-        if(empty($product)){
-            return redirect()->route('products.index')->with("not-found","Record not found");
+        if (empty($product)) {
+            return redirect()->route('products.index')->with("not-found", "Record not found");
         }
         $productImages = ProductImage::where('product_id', $product->id)->get();
-        $subCategories = SubCategory::where('category_id',$product->category_id)->get();
-        $categories = Category::orderBy('name','ASC')->get();
-        $brands = Brands::orderBy('name','ASC')->get();
+        $subCategories = SubCategory::where('category_id', $product->category_id)->get();
+        $categories = Category::orderBy('name', 'ASC')->get();
+        $brands = Brands::orderBy('name', 'ASC')->get();
 
         //fetches the related products
         $relatedProucts = [];
-        if($product->related_products!=''){
-            $productArray = explode(',',$product->related_products);
-            $relatedProucts = Product::whereIn('id',$productArray)->with('product_images')->get();
+        if ($product->related_products != '') {
+            $productArray = explode(',', $product->related_products);
+            $relatedProucts = Product::whereIn('id', $productArray)->with('product_images')->get();
         }
 
 
@@ -160,12 +182,12 @@ class ProductController extends Controller
         $data = [];
         $data['categories'] = $categories;
         $data['brands'] = $brands;
-        $data['products']= $product;
-        $data['subCategories']= $subCategories;
-        $data['productImages']= $productImages;
-        $data['relatedProucts']= $relatedProucts;
+        $data['products'] = $product;
+        $data['subCategories'] = $subCategories;
+        $data['productImages'] = $productImages;
+        $data['relatedProucts'] = $relatedProucts;
         // dd($brand);
-        return view('admin.products.edit',$data);
+        return view('admin.products.edit', $data);
     }
 
     /**
@@ -175,22 +197,22 @@ class ProductController extends Controller
     {
         $product = Product::find($id);
 
-        $rules=[
-            'title'=> 'required',
-            'slug'=> 'required|unique:products,slug,'.$product->id.',id',
-            'price'=> 'required|numeric',
-            'sku' => 'required|unique:products,sku,'.$product->id.',id',
+        $rules = [
+            'title' => 'required',
+            'slug' => 'required|unique:products,slug,' . $product->id . ',id',
+            'price' => 'required|numeric',
+            'sku' => 'required|unique:products,sku,' . $product->id . ',id',
             'track_qty' => 'required|in:Yes,No',
-            'category'=> 'required|numeric',
+            'category' => 'required|numeric',
             'is_featured' => 'required|in:Yes,No',
             // 'qty' => 'required|numeric',
         ];
 
-        if(!empty($request->track_qty) && $request->track_qty == 'Yes'){
+        if (!empty($request->track_qty) && $request->track_qty == 'Yes') {
             $rules['qty'] = 'required|numeric';
         }
 
-        $validator = Validator::make($request->all(),$rules);
+        $validator = Validator::make($request->all(), $rules);
         if ($validator->passes()) {
 
             $product->title = $request->title;
@@ -212,17 +234,16 @@ class ProductController extends Controller
             $product->related_products = (!empty($request->related_products) ? implode(',', $request->related_products) : ' ');
             $product->save();
 
-            session()->flash('create-success','Product updated successfully');
+            session()->flash('create-success', 'Product updated successfully');
 
             return response()->json([
                 'status' => true,
-                'message'=> 'Product updated successfully'
+                'message' => 'Product updated successfully'
             ]);
-
-        }else{
+        } else {
             return response()->json([
                 'status' => false,
-                'errors'=> $validator->errors()
+                'errors' => $validator->errors()
             ]);
         }
     }
@@ -234,42 +255,43 @@ class ProductController extends Controller
     {
         $product = Product::find($id);
 
-        if(empty($product)){
-            session()->flash("not-found","Record not found");
+        if (empty($product)) {
+            session()->flash("not-found", "Record not found");
             return response()->json([
-               'status'=>false,
-               'notFound'=>true,
-               'message'=>'Record not found'
+                'status' => false,
+                'notFound' => true,
+                'message' => 'Record not found'
             ]);
         }
 
-        $productImage = ProductImage::where('product_id',$id)->get();
+        $productImage = ProductImage::where('product_id', $id)->get();
         // dd($productImage);
-        if(!empty($productImage)){
-            foreach($productImage as $image){
-                File::delete(public_path().'/uploads/product/large/'.$image->image);
-                File::delete(public_path().'/uploads/product/small/'.$image->image);
+        if (!empty($productImage)) {
+            foreach ($productImage as $image) {
+                File::delete(public_path() . '/uploads/product/large/' . $image->image);
+                File::delete(public_path() . '/uploads/product/small/' . $image->image);
             }
-            ProductImage::where('product_id',$id)->delete();
+            ProductImage::where('product_id', $id)->delete();
         }
 
         $product->delete();
 
-        session()->flash('delete-success','Product delete successfully');
+        session()->flash('delete-success', 'Product delete successfully');
 
         return response()->json([
             'status' => true,
-            'message'=> 'Product delete successfully'
+            'message' => 'Product delete successfully'
         ]);
     }
 
-    public function getProducts(Request $request){
+    public function getProducts(Request $request)
+    {
         $tempProduct = [];
-        if($request->term!=""){
-            $products = Product::where('title','like','%'. $request->term.'%')->get();
+        if ($request->term != "") {
+            $products = Product::where('title', 'like', '%' . $request->term . '%')->get();
 
-            if($products!=null){
-                foreach($products as $product){
+            if ($products != null) {
+                foreach ($products as $product) {
                     $tempProduct[] = array(
                         'id' => $product->id,
                         'text' => $product->title
@@ -280,7 +302,38 @@ class ProductController extends Controller
 
         return response()->json([
             'tags' => $tempProduct,
-            'status'=> true
+            'status' => true
+        ]);
+    }
+    public function productRatings(Request $request)
+    {
+        $ratings = ProductRating::select('product_ratings.*', 'products.title as ProductTitle')->orderBy('product_ratings.created_at', 'DESC');
+        $ratings = $ratings->leftJoin('products', 'products.id', 'product_ratings.product_id');
+
+        if (!empty($request->get('keyword'))) {
+            $ratings = $ratings->orWhere('products.title', 'like', '%' . $request->get('keyword') . '%');
+            $ratings = $ratings->orWhere('product_ratings.username', 'like', '%' . $request->get('keyword') . '%');
+        }
+        $ratings = $ratings->paginate(10);
+
+
+        return view('admin.products.ratings', [
+            'ratings' => $ratings
+        ]);
+    }
+
+    public function changeRatingStatus(Request $request)
+    {
+        $productRating = ProductRating::find($request->id);
+        $productRating->status = $request->status;
+        $productRating->save();
+
+
+        session()->flash('create-success', 'Product status changed successfully');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Product status changed successfully'
         ]);
     }
 }

@@ -6,8 +6,8 @@
         <div class="container">
             <div class="light-font">
                 <ol class="breadcrumb primary-color mb-0">
-                    <li class="breadcrumb-item"><a class="white-text" href="{{route('front.home')}}">Home</a></li>
-                    <li class="breadcrumb-item"><a class="white-text" href="{{route('front.shop')}}">Shop</a></li>
+                    <li class="breadcrumb-item"><a class="white-text" href="{{ route('front.home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a class="white-text" href="{{ route('front.shop') }}">Shop</a></li>
                     <li class="breadcrumb-item">Cart</li>
                 </ol>
             </div>
@@ -17,14 +17,14 @@
     <section class=" section-9 pt-4">
         <div class="container">
             <div class="row">
-                @if(Session::has('add-success'))
+                @if (Session::has('add-success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         {!! Session::get('add-success') !!}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
 
-                @if(Session::has('error'))
+                @if (Session::has('error'))
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         {!! Session::get('error') !!}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -46,40 +46,50 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($cartContent as $item)
+                                        {{-- {{ dd($item->options->productImage->image)}} --}}
                                         <tr>
                                             <td class="text-start">
                                                 <div class="d-flex align-items-center">
-                                                    {{-- <a href="{{ route('front.product', $item->slug) }}" class="product-img"> --}}
-                                                        @if (!empty($item->options->productImage->image))
-                                                            <img src="{{ asset('uploads/product/small/' . $item->options->productImage->image) }}">
-                                                        @else
-                                                            <img src="{{ asset('admin-assets/img/default-150x150.png') }}">
-                                                        @endif
-                                                    {{-- </a> --}}
-                                                    <h2>{{$item->name}}</h2>
+                                                    @if (!empty($item->options->variantImage->image))
+                                                        <img
+                                                            src="{{ asset('uploads/product/small/variants/' . $item->options->variantImage->image) }}">
+                                                    @elseif (!empty($item->options->productImage->image))
+                                                        <img
+                                                            src="{{ asset('uploads/product/small/' . $item->options->productImage->image) }}">
+                                                    @else
+                                                        <img src="{{ asset('admin-assets/img/default-150x150.png') }}">
+                                                    @endif
+
+                                                    <h2>{{ $item->name }}</h2>
                                                 </div>
                                             </td>
-                                            <td>{{$item->price}}</td>
+                                            <td>{{ $item->price }}</td>
                                             <td>
                                                 <div class="input-group quantity mx-auto" style="width: 100px;">
                                                     <div class="input-group-btn">
-                                                        <button class="btn btn-sm btn-dark btn-minus p-2 pt-1 pb-1 sub" data-id="{{$item->rowId}}">
+                                                        <button class="btn btn-sm btn-dark btn-minus p-2 pt-1 pb-1 sub"
+                                                            data-id="{{ $item->rowId }}">
                                                             <i class="fa fa-minus"></i>
                                                         </button>
                                                     </div>
-                                                    <input type="text" class="form-control form-control-sm  border-0 text-center" value="{{$item->qty}}">
+                                                    <input type="text"
+                                                        class="form-control form-control-sm  border-0 text-center"
+                                                        value="{{ $item->qty }}">
                                                     <div class="input-group-btn">
-                                                        <button class="btn btn-sm btn-dark btn-plus p-2 pt-1 pb-1 add" data-id="{{$item->rowId}}">
+                                                        <button class="btn btn-sm btn-dark btn-plus p-2 pt-1 pb-1 add"
+                                                            data-id="{{ $item->rowId }}">
                                                             <i class="fa fa-plus"></i>
                                                         </button>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                {{$item->price * $item->qty}}
+                                                {{ $item->price * $item->qty }}
                                             </td>
                                             <td>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteItem('{{$item->rowId}}')"><i class="fa fa-times"></i></button>
+                                                <button class="btn btn-sm btn-danger"
+                                                    onclick="deleteItem('{{ $item->rowId }}')"><i
+                                                        class="fa fa-times"></i></button>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -95,7 +105,7 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between pb-2">
                                     <div>Subtotal</div>
-                                    <div>{{Cart::subtotal()}}</div>
+                                    <div>{{ Cart::subtotal() }}</div>
                                 </div>
                                 <div class="d-flex justify-content-between pb-2">
                                     <div>Shipping</div>
@@ -103,10 +113,11 @@
                                 </div>
                                 <div class="d-flex justify-content-between summery-end">
                                     <div>Total</div>
-                                    <div>{{Cart::subtotal()}}</div>
+                                    <div>{{ Cart::subtotal() }}</div>
                                 </div>
                                 <div class="pt-5">
-                                    <a href="{{route('front.checkout')}}" class="btn-dark btn btn-block w-100">Proceed to Checkout</a>
+                                    <a href="{{ route('front.checkout') }}" class="btn-dark btn btn-block w-100">Proceed to
+                                        Checkout</a>
                                 </div>
                             </div>
                         </div>
@@ -135,49 +146,58 @@
 @section('customJs')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        $('.add').click(function(){
+        $('.add').click(function() {
             var qtyElement = $(this).parent().prev(); // Qty Input
             var qtyValue = parseInt(qtyElement.val());
+            $('.add, .sub').prop('disabled', true);
+
             // if (qtyValue < 10) {
-                qtyElement.val(qtyValue+1);
-                var rowId= $(this).data('id');
-                var newQty = qtyElement.val();
-                updateCart(rowId,newQty)
+            qtyElement.val(qtyValue + 1);
+            var rowId = $(this).data('id');
+            var newQty = qtyElement.val();
+            updateCart(rowId, newQty)
             // }
         });
 
-        $('.sub').click(function(){
+        $('.sub').click(function() {
             var qtyElement = $(this).parent().next();
             var qtyValue = parseInt(qtyElement.val());
-            if (qtyValue > 1){
-                qtyElement.val(qtyValue-1);
+            if (qtyValue > 1) {
+                $('.add, .sub').prop('disabled', true);
+                qtyElement.val(qtyValue - 1);
 
-                var rowId= $(this).data('id');
+                var rowId = $(this).data('id');
                 var newQty = qtyElement.val();
-                updateCart(rowId,newQty)
+                updateCart(rowId, newQty)
+            } else {
+                // Disable the 'sub' button if quantity is already at minimum
+                $('.sub').prop('disabled', true);
             }
         });
 
-        function updateCart(rowId,qty){
+        function updateCart(rowId, qty) {
             $.ajax({
-                url: '{{ route("front.updateCart") }}',
+                url: '{{ route('front.updateCart') }}',
                 type: 'post',
-                data: {rowId:rowId,qty:qty},
+                data: {
+                    rowId: rowId,
+                    qty: qty
+                },
                 dataType: 'json',
                 success: function(response) {
-                    window.location.href = '{{ route("front.cart") }}';
+                    window.location.href = '{{ route('front.cart') }}';
                 }
             });
         }
 
         // function deleteItem(rowId){
         //     $.ajax({
-        //         url: '{{ route("front.updateCart") }}',
+        //         url: '{{ route('front.updateCart') }}',
         //         type: 'post',
         //         data: {rowId:rowId,qty:qty},
         //         dataType: 'json',
         //         success: function(response) {
-        //             window.location.href = '{{ route("front.cart") }}';
+        //             window.location.href = '{{ route('front.cart') }}';
         //         }
         //     });
         // }
@@ -201,12 +221,14 @@
                 if (result.isConfirmed) {
                     // Swal.fire("Saved!", "", "success");
                     $.ajax({
-                        url: '{{ route("front.deleteItem.cart") }}',
+                        url: '{{ route('front.deleteItem.cart') }}',
                         type: 'post',
-                        data: {rowId:rowId},
+                        data: {
+                            rowId: rowId
+                        },
                         dataType: 'json',
                         success: function(response) {
-                            window.location.href = '{{ route("front.cart") }}';
+                            window.location.href = '{{ route('front.cart') }}';
                         }
                     });
                 } else if (result.isDenied) {
