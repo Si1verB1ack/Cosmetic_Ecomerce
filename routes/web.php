@@ -72,6 +72,7 @@ Route::post('/save-rating', [ShopController::class, 'saveRating'])->name('front.
 //facebook
 // routes/web.php
 Route::post('/facebook-post', [FacebookPostController::class, 'create']);
+Route::get('/facebook-deleteAllPosts', [FacebookPostController::class, 'deleteAllPosts']);
 
 
 

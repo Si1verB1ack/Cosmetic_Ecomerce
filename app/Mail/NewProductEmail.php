@@ -3,20 +3,17 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Attachment;
+use Symfony\Component\Mime\Email;
 
 class NewProductEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-
     public $mailData;
     public $largeImagePath;
+    private $imageCid;
 
     /**
      * Create a new message instance.
@@ -28,36 +25,26 @@ class NewProductEmail extends Mailable
     }
 
     /**
-     * Get the message envelope.
+     * Build the message content.
      */
-    public function envelope(): Envelope
+    public function build()
     {
-        return new Envelope(
-            subject: $this->mailData['mail_subject'],
-        );
+        $this->view('email.new-product')
+            ->subject($this->mailData['mail_subject']);
+
+        // Embed the image using Symfony Mailer
+        $this->withSymfonyMessage(function (Email $message) {
+            $this->imageCid = $message->embedFromPath($this->largeImagePath, 'large-product-image', 'image/jpeg');
+        });
+
+        return $this;
     }
 
     /**
-     * Get the message content definition.
+     * Pass the CID to the view for inline display.
      */
-    public function content(): Content
+    public function getImageCid()
     {
-        return new Content(
-            view: 'email.new-product',
-        );
-    }
-
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
-    public function attachments(): array
-    {
-        return [
-            Attachment::fromPath($this->largeImagePath)
-                ->as('large-product-image.jpg')
-                ->withMime('image/jpeg')
-        ];
+        return $this->imageCid;
     }
 }

@@ -127,6 +127,9 @@ class ProductController extends Controller
                     $image->save($destPath);
                 }
 
+                $images = public_path() . '/uploads/product/large/' . $imageName;
+
+
                 $mailData = [
                     'mail_subject' => 'Check out our new product!',
                     'name' => $request->title,
@@ -135,12 +138,12 @@ class ProductController extends Controller
 
                 // call the api to post to the failbook
 
-                Mail::to('user@example.com')->send(new NewProductEmail($mailData, $destPath));
+                Mail::to('user@example.com')->send(new NewProductEmail($mailData, $images));
 
                 // Call the create method
                 $response = $facebookController->create(
                     "Check out our new product {$request->title}! Only $ {$request->price}!!",
-                    $destPath
+                    $images
                 );
             } else {
                 $response = $facebookController->create(

@@ -12,6 +12,8 @@
 
     <h1>New product just drop!!</h1>
 
+    <img src="cid:large-product-image" alt="Product Image">
+
     <p>Product name: {{ $mailData['name'] }}</p>
     <p>Product Price: {{ $mailData['price'] }}</p>
 

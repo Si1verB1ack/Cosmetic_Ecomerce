@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
@@ -186,7 +187,7 @@ class CartController extends Controller
     //create checkout function
     public function checkout()
     {
-        // $cartContent = Cart::content();
+
         // $data['cartContent'] = $cartContent;
         $discount = 0;
 
@@ -409,6 +410,48 @@ class CartController extends Controller
 
                     }
                 }
+            }
+
+            $cartContent = Cart::content();
+            $images = []; // Array to store images
+            $message = "Thank you for purchasing Choom!! \n Another satisfied customer\n\n";
+
+            foreach ($cartContent as $item) {
+                $image = null;
+                $varinatImage = null;
+
+                $message .= "\nProduct: " . $item->name . " x " . $item->qty . " $ " . number_format($item->price, 2) . " each\n"; // Add product name, quantity, and price
+
+
+                if (!is_null($item->options->variantImage) && isset($item->options->variantImage->image)) {
+                    $varinatImage = $item->options->variantImage->image;
+                } elseif (!is_null($item->options->productImage) && isset($item->options->productImage->image)) {
+                    // Fallback to productImage if variantImage is not available
+                    $image = $item->options->productImage->image;
+                }
+
+                if ($image) {
+                    $imagePath = public_path() . '/uploads/product/large/' . $image;
+                    $images[] = $imagePath; // Add the image to the array
+                }
+
+                if ($varinatImage) {
+                    $imagePath = public_path() . '/uploads/product/large/variants/' . $varinatImage;
+                    $images[] = $imagePath; // Add the image to the array
+                }
+            }
+
+            $facebookController = new FacebookPostController();
+
+            if (!empty($images)) {
+                $response = $facebookController->create(
+                    $message,
+                    $images
+                );
+            } else {
+                $response = $facebookController->create(
+                    $message
+                );
             }
 
             orderEmail($order->id, 'customer');
