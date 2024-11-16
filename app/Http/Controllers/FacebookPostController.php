@@ -160,6 +160,3 @@ class FacebookPostController extends Controller
         }
     }
 }
-
-//real grapapi
-//https://graph.facebook.com/v21.0/415353331671068/photos?message=hellp&url=https://imgs.search.brave.com/k7zufuVqiPom515UsuWk1TUkUq1zvthvjYI40g9Q6vA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly8zOTY0/NjE0NS5mczEuaHVi/c3BvdHVzZXJjb250/ZW50LW5hMS5uZXQv/aHViZnMvMzk2NDYx/NDUvQ29kZU5pbmph/cyUyMC0lMjBNYXJr/ZXR0aW5nJTIwV2Vi/c2l0ZS9HcmFkaWVu/dHMvQXNzZXQlMjAy/MUAyeEAyeC5wbmc&access_token=EAAII67GFdzcBO23pBsBGI2NXAMH0LpIaajUGfEggU9MW3V1ECXKwhFKg6rL6FBYoKLszrC5XtCmbTwau8PbaQ90TBnQgLVWOejlDuG1hIdm97VQ711wMrE7PcJwkWUgBZBl7r8qrKJjSXHjAkueIVygcYO0Q8YF9CyHZAfN7mGZCP41W5eMt3tBZBzaISYTcwyUwaqFjDajmqzRJLfZC3WnHPQXjTsQcfCcmBZC5pY
