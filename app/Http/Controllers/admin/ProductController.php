@@ -140,14 +140,21 @@ class ProductController extends Controller
 
                 Mail::to('user@example.com')->send(new NewProductEmail($mailData, $images));
 
+                $message = "Check out our new product {$request->title}!" .
+                    " Only $ {$request->price}!!";
+
+
                 // Call the create method
                 $response = $facebookController->create(
-                    "Check out our new product {$request->title}! Only $ {$request->price}!!",
+                    $message,
                     $images
                 );
             } else {
+                $message = "Check out our new product {$request->title}!" .
+                    " Only $ {$request->price}!!";
+
                 $response = $facebookController->create(
-                    "Check out our new product {$request->title}! Only $ {$request->price}!!"
+                    $message
                 );
             }
 

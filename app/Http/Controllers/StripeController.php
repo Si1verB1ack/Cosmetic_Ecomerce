@@ -17,6 +17,7 @@ class StripeController extends Controller
         $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
 
         $products = $request->input('products', []);
+        $totalShippingCharge = $request->input('totalShippingCharge', []);
 
         $lineItems = [];
         foreach ($products as $product) {
@@ -35,6 +36,22 @@ class StripeController extends Controller
         $checkout_session = $stripe->checkout->sessions->create([
             'line_items' => $lineItems,
             'mode' => 'payment',
+            'shipping_options' => [
+                [
+                    'shipping_rate_data' => [
+                        'display_name' => 'Standard Shipping',
+                        'type' => 'fixed_amount',
+                        'fixed_amount' => [
+                            'amount' => $totalShippingCharge * 100,
+                            'currency' => 'usd',
+                        ],
+                        'delivery_estimate' => [
+                            'minimum' => ['unit' => 'day', 'value' => 3],
+                            'maximum' => ['unit' => 'day', 'value' => 5],
+                        ],
+                    ],
+                ],
+            ],
             'ui_mode' => 'embedded',
             'return_url' => 'http://127.0.0.1:8000/stripe-success/return?session_id={CHECKOUT_SESSION_ID}',
         ]);

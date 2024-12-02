@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FacebookPostController;
+use App\Http\Controllers\PayWayController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\admin\AdminLoginController;
@@ -83,6 +84,9 @@ Route::post('/complete', [PayPalController::class, 'complete']);
 //stripe
 Route::post('/create-checkout-session', [StripeController::class, 'create']);
 Route::get('/stripe-success/return', [StripeController::class, 'success'])->name('stripe_success');
+//aba
+Route::get('/aba/create/', [PayWayController::class, 'create']);
+Route::post('/check-transaction', [PayWayController::class, 'checkTransaction']);
 
 
 

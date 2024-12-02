@@ -191,11 +191,11 @@
 
 
                             <h3 class="card-title h5 mb-3">Payment Method</h3>
-                            <div class="form-check">
+                            {{-- <div class="form-check">
                                 <input type="radio" checked name="payment_method" value="cod"
                                     id="payment_method_one">
                                 <label for="payment_method_one" class="form-check-label">COD</label>
-                            </div>
+                            </div> --}}
 
                             <div class="form-check">
                                 <input type="radio" name="payment_method" value="cod" id="payment_method_two">
@@ -205,6 +205,11 @@
                             <div class="form-check">
                                 <input type="radio" name="payment_method" value="cod" id="payment_method_three">
                                 <label for="payment_method_three" class="form-check-label">Paypal</label>
+                            </div>
+
+                            <div class="form-check">
+                                <input type="radio" name="payment_method" value="cod" id="payment_method_four">
+                                <label for="payment_method_four" class="form-check-label">ABA</label>
                             </div>
 
                             <!-- Stripe Payment Form Section -->
@@ -237,14 +242,12 @@
                             <div class="card-body p-0 d-none mt-3" id="paypal-payment-form">
                                 <div class="mb-3">
                                     <div class="row mt-3">
-                                        <div class="col-12 col-lg-6 offset-lg-3">
-                                            <div class="input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="text" class="form-control" id="paypal-amount"
-                                                    value="{{ number_format($grandTotal, 2) }}" aria-label="Amount">
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="text" class="form-control" id="paypal-amount" readonly
+                                                value="{{ number_format($grandTotal, 2) }}" aria-label="Amount">
 
-                                                <span class="input-group-text">.00</span>
-                                            </div>
+                                            <span class="input-group-text">.00</span>
                                         </div>
                                     </div>
                                     <div class="row mt-3">
@@ -253,10 +256,23 @@
                                 </div>
                             </div>
 
+                            <!-- PayPal Payment Form Section -->
+                            <div class="card-body p-0 d-none mt-3" id="aba-payment-form">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mt-2 mb-2 summery-end">
+                                        <div class="h5"><strong>Total</strong></div>
+                                        <div class="h5"><strong
+                                                id="grandTotal">${{ number_format($grandTotal, 2) }}</strong></div>
+                                    </div>
+                                    <input type="button" id="checkout_button" class="btn-dark btn btn-block w-100"
+                                        value="Check out">
+                                </div>
+                            </div>
 
-                            <div class="pt-4">
+
+                            <div class="pt-1">
                                 {{-- <a href="#" class="btn-dark btn btn-block w-100">Pay Now</a> --}}
-                                <button type="submit" class="btn-dark btn btn-block w-100">Pay Now</button>
+                                <button type="submit" hidden class="btn-dark btn btn-block w-100">Pay Now</button>
                             </div>
                         </div>
 
@@ -266,12 +282,63 @@
                     </div>
                 </div>
             </form>
+            <form method="POST" target="aba_webservice" action="{{ config('aba.api_url') }}" id="aba_merchant_request"
+                name="aba_merchant_request">
+                @csrf
+                <input type="hidden" name="hash" id="hash" />
+                <input type="hidden" name="tran_id" id="tran_id" />
+                <input type="hidden" name="amount" id="amount" />
+                <input type="hidden" name="firstname" id="firstname" />
+                <input type="hidden" name="lastname" id="lastname" />
+                <input type="hidden" name="phone" id="phone" />
+                <input type="hidden" name="abaemail" id="abaemail" />
+                <input type="hidden" name="items" id="items" />
+                <input type="hidden" name="return_params" id="return_params" />
+                <input type="hidden" name="currency" id="currency" />
+                <input type="hidden" name="shipping" id="shipping" />
+                <input type="hidden" name="type" id="type" />
+                <input type="hidden" name="payment_option" id="payment_option" />
+                <input type="hidden" name="merchant_id" id="merchant_id" />
+                <input type="hidden" name="req_time" id="req_time" />
+            </form>
         </div>
     </section>
 
 @endsection
 
 @section('customJs')
+    <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js">
+    </script>
+    <script>
+        $.LoadingOverlaySetup({
+            background: "rgba(255, 255, 255, 0.8)", // Set the background color with transparency
+            image: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><circle r="80" cx="500" cy="90"/><circle r="80" cx="500" cy="910"/><circle r="80" cx="90" cy="500"/><circle r="80" cx="910" cy="500"/><circle r="80" cx="212" cy="212"/><circle r="80" cx="788" cy="212"/><circle r="80" cx="212" cy="788"/><circle r="80" cx="788" cy="788"/></svg>', // Custom SVG image
+            imageAnimation: "2000ms", // Image animation duration
+            imageColor: "#202020", // Image color
+            imageAutoResize: true, // Resize image automatically
+            imageResizeFactor: 0.3, // Resize factor for the image
+            imageOrder: 1, // Image order
+            fontawesome: false, // Disable FontAwesome icons
+            text: "", // No text
+            textColor: "#202020", // Text color (if you add text)
+            textAutoResize: true, // Resize text automatically
+            textResizeFactor: 0.5, // Text resize factor
+            progress: false, // No progress bar
+            progressAutoResize: true, // Resize progress bar automatically
+            progressResizeFactor: 0.25, // Resize factor for the progress bar
+            progressColor: "#a0a0a0", // Progress bar color
+            progressOrder: 5, // Progress bar order
+            progressFixedPosition: false, // Disable fixed position for the progress bar
+            progressSpeed: 200, // Progress bar speed
+            size: 50, // Initial size of the overlay
+            maxSize: 120, // Max size of the overlay
+            minSize: 20, // Min size of the overlay
+            direction: "column", // Layout direction for items in the overlay
+            fade: 400, // Fade duration
+            resizeInterval: 50, // Resize interval
+            hideAfter: 5000 // Hide overlay after 5 seconds
+        });
+    </script>
     <script src="https://js.stripe.com/v3/"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -285,6 +352,7 @@
                     text: "Thank you for purchasing!",
                     icon: "success"
                 }).then(() => {
+                    $.LoadingOverlay("show");
                     // Submit the form after the alert is confirmed
                     $("#selected_payment_method").val("2");
                     $("#orderForm").submit();
@@ -314,6 +382,9 @@
                 })->toArray(),
         ) !!};
 
+        const totalShippingCharge = {!! json_encode($totalShippingCharge) !!};
+
+
         // Initialize Stripe.js
         const stripe = Stripe('{{ env('PUBLISHABLE_KEY') }}');
 
@@ -329,7 +400,8 @@
                         "X-CSRF-Token": "{{ csrf_token() }}"
                     },
                     body: JSON.stringify({
-                        products: cartItems
+                        products: cartItems,
+                        totalShippingCharge: totalShippingCharge,
                     })
                 });
                 const {
@@ -347,6 +419,128 @@
             checkout.mount('#checkout');
         }
     </script>
+
+    {{-- aba --}}
+    <script src="https://checkout.payway.com.kh/plugins/checkout2-0.js"></script>
+    <script>
+        $(document).ready(function() {
+
+            const abaItems = {!! json_encode(
+                Cart::content()->map(function ($item) {
+                        return [
+                            'name' => $item->name,
+                            'unit_amount' => $item->price, // Stripe expects the price in cents
+                            'quantity' => $item->qty,
+                        ];
+                    })->toArray(),
+            ) !!};
+
+
+            // Prepare the data to send to the backend (you can dynamically get these values as needed)
+            const productsList = abaItems; // Assume you have the cart items data here
+            const totalShipping = {!! json_encode($totalShippingCharge) !!}; // Example shipping charge
+            // const grandTotal = "{{ $grandTotal }}";
+
+            const requestData = {
+                products: productsList, // Product data
+                amount: 0,
+                firstName: $('#first_name').val(),
+                lastName: $('#last_name').val(),
+                phone: $('#mobile').val(),
+                email: $('#email').val(),
+                return_params: 'Test Params',
+                type: 'purchase',
+                currency: 'USD',
+                shipping: totalShipping,
+                payment_option: null
+            };
+
+            // Make the AJAX request
+            $.ajax({
+                url: '/aba/create/', // The route to your controller method
+                type: 'GET',
+                data: requestData, // Pass data to the backend
+                success: function(response) {
+                    // Dynamically set form values from the response
+                    $('#hash').val(response.hash);
+                    $('#tran_id').val(response.transaction_id);
+                    $('#amount').val(response.amount); // Set amount in the hidden field
+                    $('#total-amount-aba').text(response.amount); // Display amount where it's needed
+                    $('#firstname').val(response.firstName);
+                    $('#lastname').val(response.lastName);
+                    $('#phone').val(response.phone);
+                    $('#abaemail').val(response.abaemail);
+                    $('#items').val(response.items);
+                    $('#return_params').val(response.return_params);
+                    $('#currency').val(response.currency);
+                    $('#shipping').val(response.shipping);
+                    $('#type').val(response.type);
+                    $('#payment_option').val(response.payment_option);
+                    $('#merchant_id').val(response.merchant_id);
+                    $('#req_time').val(response.req_time);
+
+                    // Optionally, you can handle the form submission here if needed
+                    // $('#aba_merchant_request').submit();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching data:', error);
+                }
+            });
+        });
+
+
+
+        $('#checkout_button').click(function() {
+            AbaPayway.checkout(); // Trigger ABA checkout
+
+            // Simulated tran_id for testing
+            const tranId = $('#tran_id').val();
+
+            // Start polling the transaction status
+            const pollInterval = setInterval(function() {
+                $.ajax({
+                    url: '/check-transaction',
+                    type: 'POST',
+                    data: {
+                        tran_id: tranId,
+                        // _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
+                    },
+                    success: function(response) {
+                        console.log(response);
+
+                        if (response && response.status) {
+                            if (response.status.code === '00') {
+                                Swal.fire({
+                                    title: "Success",
+                                    text: "Payment approved!",
+                                    icon: "success",
+                                });
+                                clearInterval(pollInterval); // Stop polling
+                            } else if (response.status.code === '01') {
+                                Swal.fire({
+                                    title: "Pending",
+                                    text: "Payment is still pending...",
+                                    icon: "info",
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: "Error",
+                                    text: "Payment failed or cancelled.",
+                                    icon: "error",
+                                });
+                                clearInterval(pollInterval); // Stop polling
+                            }
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error checking transaction:', error);
+                        clearInterval(pollInterval); // Stop polling on error
+                    },
+                });
+            }, 5000); // Poll every 5 seconds
+        });
+    </script>
+
 
     <script
         src="https://www.paypal.com/sdk/js?client-id=test&buyer-country=US&currency=USD&components=buttons&enable-funding=venmo,paylater,card"
@@ -457,6 +651,7 @@
                                 text: "Thank you for purchasing!",
                                 icon: "success"
                             }).then(() => {
+                                $.LoadingOverlay("show");
                                 // Submit the form after the alert is confirmed
                                 $("#orderForm").submit();
                             });
@@ -508,17 +703,26 @@
                 // Stripe selected, show only Stripe form and set hidden input to "Stripe"
                 $("#stripe-payment-form").removeClass("d-none");
                 $("#paypal-payment-form").addClass("d-none");
+                $("#aba-payment-form").addClass("d-none");
                 $("#selected_payment_method").val("2");
             } else if ($("#payment_method_three").is(":checked")) {
                 // PayPal selected, show only PayPal form and set hidden input to "PayPal"
                 $("#paypal-payment-form").removeClass("d-none");
                 $("#stripe-payment-form").addClass("d-none");
+                $("#aba-payment-form").addClass("d-none");
                 $("#selected_payment_method").val("3");
+            } else if ($("#payment_method_four").is(":checked")) {
+                // aba selected, show only PayPal form and set hidden input to "PayPal"
+                $("#aba-payment-form").removeClass("d-none");
+                $("#paypal-payment-form").addClass("d-none");
+                $("#stripe-payment-form").addClass("d-none");
+                $("#selected_payment_method").val("4");
             }
         });
 
 
         $("#orderForm").submit(function(event) {
+            $.LoadingOverlay("show");
             event.preventDefault();
             $("button[type=submit]").prop('disabled', true);
             $.ajax({
@@ -530,6 +734,7 @@
                 data: $(this).serializeArray(),
                 dataType: 'json',
                 success: function(response) {
+                    $.LoadingOverlay("hide");
                     $("button[type=submit]").prop('disabled', false);
                     var errors = response.errors;
                     if (response.status == false) {
