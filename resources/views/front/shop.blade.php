@@ -109,15 +109,12 @@
                                         </div>
                                     </div> --}}
                                     <select name="sort" id="sort" class="form-control">
-                                        <option value="lasted"
-                                        {{($sort == 'latest')?'selected' : ''}}>
-                                        Lastet</option>
-                                        <option value="price_desc"
-                                        {{($sort == 'price_desc')?'selected' : ''}}>
-                                        Price High</option>
-                                        <option value="price_asc"
-                                        {{($sort == 'price_asc')?'selected' : ''}}>
-                                        Price Low</option>
+                                        <option value="lasted" {{ $sort == 'latest' ? 'selected' : '' }}>
+                                            Lastet</option>
+                                        <option value="price_desc" {{ $sort == 'price_desc' ? 'selected' : '' }}>
+                                            Price High</option>
+                                        <option value="price_asc" {{ $sort == 'price_asc' ? 'selected' : '' }}>
+                                            Price Low</option>
                                     </select>
                                 </div>
                             </div>
@@ -144,9 +141,23 @@
                                             <a class="whishlist" href="222"><i class="far fa-heart"></i></a>
 
                                             <div class="product-action">
-                                                @if ($product->track_qty =='Yes')
-                                                    @if ($product->qty > 0)
-                                                        <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                                @php
+                                                    // Convert variants to a collection
+                                                    $variants = collect($product->variants);
+
+                                                    // Check if any variant has qty > 0
+                                                    $anyInStock = $variants
+                                                        ->filter(function ($variant) {
+                                                            return $variant['qty'] > 0; // Ensure key matches your JSON structure
+                                                        })
+                                                        ->isNotEmpty();
+                                                @endphp
+                                                {{-- <div>{{ $anyInStock }}</div> --}}
+
+                                                @if ($product->track_qty == 'Yes')
+                                                    @if ($anyInStock)
+                                                        <a class="btn btn-dark"
+                                                            href="{{ route('front.product', $product->slug) }}">
                                                             <i class="fa fa-shopping-cart"></i> Add To Cart
                                                         </a>
                                                     @else
@@ -155,7 +166,8 @@
                                                         </a>
                                                     @endif
                                                 @else
-                                                    <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                                    <a class="btn btn-dark" href="javascript:void(0);"
+                                                        onclick="addToCart({{ $product->id }});">
                                                         <i class="fa fa-shopping-cart"></i> Add To Cart
                                                     </a>
                                                 @endif
@@ -177,7 +189,7 @@
                         @endif
 
                         <div class="col-md-12 pt-5">
-                            {{$products->withQueryString()->links()}}
+                            {{ $products->withQueryString()->links() }}
                             {{-- <nav aria-label="Page navigation example">
                                 <ul class="pagination justify-content-end">
                                     <li class="page-item disabled">

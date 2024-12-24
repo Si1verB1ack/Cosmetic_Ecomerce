@@ -17,10 +17,16 @@ class StripeController extends Controller
         $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
 
         $products = $request->input('products', []);
-        $totalShippingCharge = $request->input('totalShippingCharge', []);
+        $totalShippingCharge = $request->input('totalShippingCharge', 0);
+        $discountTypeAmount = $request->input('discountTypeAmount', 0);
+        $discountType = $request->input('discountType', 'none'); // 'percent' or 'fixed'
 
         $lineItems = [];
+        $subtotalAmount = 0; // To calculate the total amount before discount
+
+        // Add the products to the line items and calculate the subtotal
         foreach ($products as $product) {
+            $lineItemAmount = $product['unit_amount'] * $product['quantity'];
             $lineItems[] = [
                 'price_data' => [
                     'currency' => 'usd',
@@ -31,10 +37,32 @@ class StripeController extends Controller
                 ],
                 'quantity' => $product['quantity'],
             ];
+
+            $subtotalAmount += $lineItemAmount; // Keep track of subtotal
         }
 
-        $checkout_session = $stripe->checkout->sessions->create([
-            'line_items' => $lineItems,
+        // Create the coupon based on the discount type (percent or fixed) only if there's a discount
+        $couponCode = null;
+        if ($discountTypeAmount > 0) {
+            if ($discountType == 'percent') {
+                $coupon = $stripe->coupons->create([
+                    'percent_off' => (float)$discountTypeAmount, // Percentage discount
+                    'duration' => 'once', // Applies only once
+                ]);
+                $couponCode = $coupon->id;
+            } else {
+                $coupon = $stripe->coupons->create([
+                    'amount_off' => (int)($discountTypeAmount * 100), // Fixed discount amount in cents
+                    'currency' => 'usd',
+                    'duration' => 'once',
+                ]);
+                $couponCode = $coupon->id;
+            }
+        }
+
+        // Prepare the session data
+        $sessionData = [
+            'line_items' => $lineItems, // Products with original prices
             'mode' => 'payment',
             'shipping_options' => [
                 [
@@ -42,7 +70,7 @@ class StripeController extends Controller
                         'display_name' => 'Standard Shipping',
                         'type' => 'fixed_amount',
                         'fixed_amount' => [
-                            'amount' => $totalShippingCharge * 100,
+                            'amount' => (int)($totalShippingCharge * 100), // Shipping charge in cents
                             'currency' => 'usd',
                         ],
                         'delivery_estimate' => [
@@ -52,12 +80,27 @@ class StripeController extends Controller
                     ],
                 ],
             ],
-            'ui_mode' => 'embedded',
             'return_url' => 'http://127.0.0.1:8000/stripe-success/return?session_id={CHECKOUT_SESSION_ID}',
-        ]);
+            'ui_mode' => 'embedded', // Ensure this is set to 'embedded'
+        ];
+
+        // Add the discount only if there is a coupon
+        if ($couponCode) {
+            $sessionData['discounts'] = [
+                [
+                    'coupon' => $couponCode, // Apply the coupon by code
+                ],
+            ];
+        }
+
+        // Create the Stripe checkout session
+        $checkout_session = $stripe->checkout->sessions->create($sessionData);
 
         return response()->json(['clientSecret' => $checkout_session->client_secret]);
     }
+
+
+
 
     public function success(Request $request)
     {
@@ -73,6 +116,6 @@ class StripeController extends Controller
         $status = $session->payment_status === 'paid' ? 'success' : 'failed';
 
         // Redirect to the original route with the status in the query parameters
-        return redirect()->route('front.checkout')->with('status', $status);
+        return redirect()->back()->with('status', $status);
     }
 }

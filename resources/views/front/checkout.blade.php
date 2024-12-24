@@ -157,6 +157,8 @@
                                 <div class="d-flex justify-content-between summery-end">
                                     <div class="h6"><strong>Discount</strong></div>
                                     <div class="h6" id="discount_value"><strong> ${{ $discount }} </strong></div>
+                                    <input type="hidden" id="discount_type" name="discount_type" />
+                                    <input type="hidden" id="discount_type_amount" name="discount_type_amount" />
                                 </div>
                                 <div class="d-flex justify-content-between mt-2">
                                     <div class="h6"><strong>Shipping</strong></div>
@@ -262,7 +264,7 @@
                                     <div class="d-flex justify-content-between mt-2 mb-2 summery-end">
                                         <div class="h5"><strong>Total</strong></div>
                                         <div class="h5"><strong
-                                                id="grandTotal">${{ number_format($grandTotal, 2) }}</strong></div>
+                                                id="grandTotalPayPal">${{ number_format($grandTotal, 2) }}</strong></div>
                                     </div>
                                     <input type="button" id="checkout_button" class="btn-dark btn btn-block w-100"
                                         value="Check out">
@@ -344,7 +346,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             const url = new URL(window.location);
             const status = "{{ session('status') }}";
-            console.log(status);
 
             if (status === 'success') {
                 Swal.fire({
@@ -355,6 +356,8 @@
                     $.LoadingOverlay("show");
                     // Submit the form after the alert is confirmed
                     $("#selected_payment_method").val("2");
+                    localStorage.removeItem('discountType');
+                    localStorage.removeItem('discountTypeAmount');
                     $("#orderForm").submit();
                 });
             } else if (status === 'failed') {
@@ -372,6 +375,7 @@
             // }
         });
 
+
         const cartItems = {!! json_encode(
             Cart::content()->map(function ($item) {
                     return [
@@ -385,6 +389,7 @@
         const totalShippingCharge = {!! json_encode($totalShippingCharge) !!};
 
 
+
         // Initialize Stripe.js
         const stripe = Stripe('{{ env('PUBLISHABLE_KEY') }}');
 
@@ -392,6 +397,9 @@
 
         // Fetch Checkout Session and retrieve the client secret
         async function initialize() {
+            const discountType = localStorage.getItem('discountType');
+            const discountTypeAmount = parseFloat(localStorage.getItem('discountTypeAmount'));
+
             const fetchClientSecret = async () => {
                 const response = await fetch("/create-checkout-session", {
                     method: "POST",
@@ -402,6 +410,8 @@
                     body: JSON.stringify({
                         products: cartItems,
                         totalShippingCharge: totalShippingCharge,
+                        discountTypeAmount: discountTypeAmount,
+                        discountType: discountType,
                     })
                 });
                 const {
@@ -420,6 +430,7 @@
         }
     </script>
 
+
     {{-- aba --}}
     <script src="https://checkout.payway.com.kh/plugins/checkout2-0.js"></script>
     <script>
@@ -435,6 +446,12 @@
                     })->toArray(),
             ) !!};
 
+            const discountElement = document.getElementById('discount_value');
+            const discountValue = discountElement ? parseFloat(discountElement.innerText.replace('$', '').trim()) :
+                0;
+
+            console.log("disounted value" + discountValue); // This will print the discount value
+
 
             // Prepare the data to send to the backend (you can dynamically get these values as needed)
             const productsList = abaItems; // Assume you have the cart items data here
@@ -444,6 +461,7 @@
             const requestData = {
                 products: productsList, // Product data
                 amount: 0,
+                discount: discountValue,
                 firstName: $('#first_name').val(),
                 lastName: $('#last_name').val(),
                 phone: $('#mobile').val(),
@@ -487,60 +505,38 @@
                 }
             });
         });
-
-
-
         $('#checkout_button').click(function() {
-            AbaPayway.checkout(); // Trigger ABA checkout
+            AbaPayway.checkout();
+            // Store the original callback
+            var originalSuccessCallback = _abaCallbackOnSuccess;
+            var originalErrorCallback = _abaCallbackOnError;
 
-            // Simulated tran_id for testing
-            const tranId = $('#tran_id').val();
-
-            // Start polling the transaction status
-            const pollInterval = setInterval(function() {
-                $.ajax({
-                    url: '/check-transaction',
-                    type: 'POST',
-                    data: {
-                        tran_id: tranId,
-                        // _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
-                    },
-                    success: function(response) {
-                        console.log(response);
-
-                        if (response && response.status) {
-                            if (response.status.code === '00') {
-                                Swal.fire({
-                                    title: "Success",
-                                    text: "Payment approved!",
-                                    icon: "success",
-                                });
-                                clearInterval(pollInterval); // Stop polling
-                            } else if (response.status.code === '01') {
-                                Swal.fire({
-                                    title: "Pending",
-                                    text: "Payment is still pending...",
-                                    icon: "info",
-                                });
-                            } else {
-                                Swal.fire({
-                                    title: "Error",
-                                    text: "Payment failed or cancelled.",
-                                    icon: "error",
-                                });
-                                clearInterval(pollInterval); // Stop polling
-                            }
-                        }
-                    },
-                    error: function(error) {
-                        console.error('Error checking transaction:', error);
-                        clearInterval(pollInterval); // Stop polling on error
-                    },
+            // Redefine with extended functionality
+            _abaCallbackOnSuccess = function(response) {
+                Swal.fire({
+                    title: "Transaction Complete",
+                    text: "Thank you for purchasing!",
+                    icon: "success"
+                }).then(() => {
+                    $.LoadingOverlay("show");
+                    localStorage.removeItem('discountType');
+                    localStorage.removeItem('discountTypeAmount');
+                    // Submit the form after the alert is confirmed
+                    $("#orderForm").submit();
                 });
-            }, 5000); // Poll every 5 seconds
+            };
+
+            _abaCallbackOnError = function(error) {
+                // Call original callback first
+                if (originalErrorCallback) {
+                    originalErrorCallback(error);
+                }
+
+                // Add your custom error handling
+                console.error('Additional error handling', error);
+            };
         });
     </script>
-
 
     <script
         src="https://www.paypal.com/sdk/js?client-id=test&buyer-country=US&currency=USD&components=buttons&enable-funding=venmo,paylater,card"
@@ -548,8 +544,18 @@
     <script>
         paypal.Buttons({
             createOrder: function(data, actions) {
-                var value = parseFloat("{{ $grandTotal }}").toFixed(
-                    2); // Ensure value is a float with 2 decimals
+                var grandTotalText = $("#grandTotal").text(); // Get the text inside <strong id="grandTotal">
+
+                // Remove dollar sign and commas to sanitize the value
+                var sanitizedGrandTotal = grandTotalText.replace(/[^0-9.]/g, '');
+
+                // Parse it as a float and ensure it's 2 decimal places
+                var grandTotalValue = parseFloat(sanitizedGrandTotal).toFixed(2);
+
+                // Now you can use this value for PayPal or any other purpose
+                console.log("Updated Grand Total (formatted):", grandTotalValue);
+
+                var value = grandTotalValue;
 
                 // Ensure value is a valid number
                 if (isNaN(value) || value <= 0) {
@@ -652,6 +658,9 @@
                                 icon: "success"
                             }).then(() => {
                                 $.LoadingOverlay("show");
+                                localStorage.removeItem('discountType');
+                                localStorage.removeItem('discountTypeAmount');
+
                                 // Submit the form after the alert is confirmed
                                 $("#orderForm").submit();
                             });
@@ -695,33 +704,103 @@
 
     <script>
         $("input[name='payment_method']").click(function() {
-            if ($("#payment_method_one").is(":checked")) {
-                // COD selected, hide both forms and set hidden input to "COD"
-                $("#stripe-payment-form, #paypal-payment-form").addClass("d-none");
-                $("#selected_payment_method").val("1");
-            } else if ($("#payment_method_two").is(":checked")) {
-                // Stripe selected, show only Stripe form and set hidden input to "Stripe"
-                $("#stripe-payment-form").removeClass("d-none");
-                $("#paypal-payment-form").addClass("d-none");
-                $("#aba-payment-form").addClass("d-none");
-                $("#selected_payment_method").val("2");
-            } else if ($("#payment_method_three").is(":checked")) {
-                // PayPal selected, show only PayPal form and set hidden input to "PayPal"
-                $("#paypal-payment-form").removeClass("d-none");
-                $("#stripe-payment-form").addClass("d-none");
-                $("#aba-payment-form").addClass("d-none");
-                $("#selected_payment_method").val("3");
-            } else if ($("#payment_method_four").is(":checked")) {
-                // aba selected, show only PayPal form and set hidden input to "PayPal"
-                $("#aba-payment-form").removeClass("d-none");
-                $("#paypal-payment-form").addClass("d-none");
-                $("#stripe-payment-form").addClass("d-none");
-                $("#selected_payment_method").val("4");
+            // Reset any previous validation error messages
+            $(".invalid-feedback").remove();
+            $(".is-invalid").removeClass('is-invalid');
+
+            // Initialize a flag for validation
+            var isValid = true;
+
+            // Validate shipping address fields
+            var firstName = $("#first_name").val().trim();
+            var lastName = $("#last_name").val().trim();
+            var email = $("#email").val().trim();
+            var country = $("#country").val().trim();
+            var address = $("#address").val().trim();
+            var city = $("#city").val().trim();
+            var state = $("#state").val().trim();
+            var zip = $("#zip").val().trim();
+            var mobile = $("#mobile").val().trim();
+
+            // Validate address fields
+            if (!firstName) {
+                isValid = false;
+                $("#first_name").after("<p class='invalid-feedback'>First Name is required</p>").addClass(
+                    'is-invalid');
+            }
+            if (!lastName) {
+                isValid = false;
+                $("#last_name").after("<p class='invalid-feedback'>Last Name is required</p>").addClass(
+                    'is-invalid');
+            }
+            if (!email) {
+                isValid = false;
+                $("#email").after("<p class='invalid-feedback'>Email is required</p>").addClass('is-invalid');
+            }
+            if (!country) {
+                isValid = false;
+                $("#country").after("<p class='invalid-feedback'>Country is required</p>").addClass('is-invalid');
+            }
+            if (!address) {
+                isValid = false;
+                $("#address").after("<p class='invalid-feedback'>Address is required</p>").addClass('is-invalid');
+            }
+            if (!city) {
+                isValid = false;
+                $("#city").after("<p class='invalid-feedback'>City is required</p>").addClass('is-invalid');
+            }
+            if (!state) {
+                isValid = false;
+                $("#state").after("<p class='invalid-feedback'>State is required</p>").addClass('is-invalid');
+            }
+            if (!zip) {
+                isValid = false;
+                $("#zip").after("<p class='invalid-feedback'>Zip is required</p>").addClass('is-invalid');
+            }
+            if (!mobile) {
+                isValid = false;
+                $("#mobile").after("<p class='invalid-feedback'>Mobile number is required</p>").addClass(
+                    'is-invalid');
+            }
+
+            // Check selected payment method only if the form is valid
+            if (isValid) {
+                if ($("#payment_method_one").is(":checked")) {
+                    // COD selected, hide both forms and set hidden input to "COD"
+                    $("#stripe-payment-form, #paypal-payment-form, #aba-payment-form").addClass("d-none");
+                    $("#selected_payment_method").val("1");
+                } else if ($("#payment_method_two").is(":checked")) {
+                    // Stripe selected, show only Stripe form and set hidden input to "Stripe"
+                    $("#stripe-payment-form").removeClass("d-none");
+                    $("#paypal-payment-form, #aba-payment-form").addClass("d-none");
+                    $("#selected_payment_method").val("2");
+                } else if ($("#payment_method_three").is(":checked")) {
+                    // PayPal selected, show only PayPal form and set hidden input to "PayPal"
+                    $("#paypal-payment-form").removeClass("d-none");
+                    $("#stripe-payment-form, #aba-payment-form").addClass("d-none");
+                    $("#selected_payment_method").val("3");
+                } else if ($("#payment_method_four").is(":checked")) {
+                    // ABA selected, show only ABA form and set hidden input to "ABA"
+                    $("#aba-payment-form").removeClass("d-none");
+                    $("#paypal-payment-form, #stripe-payment-form").addClass("d-none");
+                    $("#selected_payment_method").val("4");
+                }
+            }
+
+            // If the form is not valid, prevent the selection of payment method
+            if (!isValid) {
+                return false; // Prevent selection of the payment method
             }
         });
 
 
+
+
+
+
         $("#orderForm").submit(function(event) {
+            localStorage.removeItem('discountType');
+            localStorage.removeItem('discountTypeAmount');
             $.LoadingOverlay("show");
             event.preventDefault();
             $("button[type=submit]").prop('disabled', true);
@@ -832,8 +911,15 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.log(xhr.responseText);
+                    $.LoadingOverlay("hide");
+                    $("button[type=submit]").prop('disabled', false);
+                    alert("An unexpected error occurred. Please try again.");
+                    console.log("Raw response:", xhr.responseText);
+                    console.log("Error status:", status);
+                    console.log("Error:", error);
                 }
+
+
             });
         });
 
@@ -882,7 +968,22 @@
                         $("#shippingAmount").html('$' + response.shippingCharge);
                         $("#grandTotal").html('$' + response.grandTotal);
                         $("#discount_value").html('<strong>$' + response.discount + '</strong>');
+                        console.log("Discount Type: ", response.discountType); // Debugging line
+                        localStorage.setItem('discountType', response.discountType);
+                        localStorage.setItem('discountTypeAmount', response.discountTypeAmount);
+                        $("#discount_type").val(response.discountType);
+                        $("#discount_type_amount").val(response.discountTypeAmount);
+
                         $("#discount-response-wrapper").html(response.discountString);
+
+                        let sanitizedGrandTotal = response.grandTotal.replace(/[^0-9.]/g, '');
+                        window.grandTotalValue = parseFloat(sanitizedGrandTotal).toFixed(
+                            2); // Ensure it's a float with 2 decimals
+
+                        console.log("Updated Grand Total (formatted):", window.grandTotalValue);
+
+                        location.reload();
+
                     } else {
                         $("#discount-response-wrapper").html('<span class="text-danger">' + response
                             .message + '</span>');
@@ -905,17 +1006,34 @@
                         $("#shippingAmount").html('$' + response.shippingCharge);
                         $("#grandTotal").html('$' + response.grandTotal);
                         $("#discount_value").html('<strong>$' + response.discount + '</strong>');
+                        console.log("Discount Type: ", response.discountType);
+
+                        $("#discount_type").val(response.discountType); // Update hidden input
+                        localStorage.setItem('discountType', response.discountType);
+
+                        localStorage.setItem('discountTypeAmount', response.discountTypeAmount);
+                        $("#discount_type_amount").val(response.discountTypeAmount);
+
+
+
                         $("#discount-response").html('');
                         $("#discount_code").val('');
+                        location.reload();
                     }
                 }
             });
 
         });
-        // $("#remove-dicount").click(function(){
-        //     // event.preventDefault();
-        //     // $("button[type=submit]").prop('disabled',true);
 
-        // });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Retrieve the discountType from localStorage
+            const discountType = localStorage.getItem('discountType');
+            const discountTypeAmount = localStorage.getItem('discountTypeAmount');
+            if (discountType) {
+                // Set the discountType value in the hidden input
+                $("#discount_type").val(discountType);
+                $("#discount_type_amount").val(discountTypeAmount);
+            }
+        });
     </script>
 @endsection

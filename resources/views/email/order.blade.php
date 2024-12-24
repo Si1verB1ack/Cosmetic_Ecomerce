@@ -178,7 +178,7 @@
                     <tr>
                         <td style="padding: 10px 0; color: #718096;">Shipping:</td>
                         <td style="padding: 10px 0; text-align: right;">
-                            ${{ number_format($mailData['order']->shipping, 2) }}</td>
+                            $0.00</td>
                     </tr>
                     <tr>
                         <td colspan="2">

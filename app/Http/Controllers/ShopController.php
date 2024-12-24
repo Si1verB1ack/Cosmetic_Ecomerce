@@ -220,15 +220,16 @@ class ShopController extends Controller
         // dd($request->input('variant_id'));
 
         // Find the variant based on the provided parameters
-        $variant = ProductVariant::with('images')->where('product_id', $request->input('productId'))
-            ->where('id', $variantId)
+        $variant = ProductVariant::with('images')
+            ->where('product_id', $request->input('productId'))
             ->when($colorId, function ($query) use ($colorId) {
-                return $query->where('color_id', $colorId);  // Match color_id instead of color name
+                return $query->where('color_id', $colorId);
             })
             ->when($sizeId, function ($query) use ($sizeId) {
-                return $query->where('size_id', $sizeId);    // Match size_id instead of size name
+                return $query->where('size_id', $sizeId);
             })
             ->first();
+
 
         // If no matching variant is found, return with an error message
         if (!$variant) {
@@ -250,5 +251,4 @@ class ShopController extends Controller
         // Return a view with the product, variant, color, and size details
         return view('front.product', $data);
     }
-
 }

@@ -2,49 +2,123 @@
 
 @section('customCss')
     <style>
+        .back-to-base {
+            display: inline-flex;
+            align-items: center;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            margin: 1rem 0;
+            font-weight: 500;
+            color: #1e293b;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-to-base:hover {
+            background-color: #f1f5f9;
+            color: #2563eb;
+            transform: translateX(-2px);
+        }
+
+        .back-to-base i {
+            margin-right: 0.75rem;
+            font-size: 0.875rem;
+            transition: transform 0.2s ease;
+        }
+
+        .back-to-base:hover i {
+            transform: translateX(-2px);
+        }
+
         .color-options {
             display: flex;
+            gap: 8px;
+            /* More consistent spacing */
         }
 
         .color-option {
-            width: 30px;
-            height: 30px;
-            margin-right: 5px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: 2px solid #ddd;
             cursor: pointer;
-            transition: border-color 0.3s ease;
+            transition: transform 0.3s ease, border-color 0.3s ease;
         }
 
         .color-option:hover {
-            border-color: #333;
+            border-color: #ff66b2;
+            /* Light pink border on hover */
+            transform: scale(1.1);
+            /* Slight zoom effect */
+        }
+
+        .color-option.selected {
+            border-color: #ff66b2;
+            /* Light pink border for selected option */
+            box-shadow: 0 0 5px rgba(255, 102, 178, 0.5);
+            /* Soft pink shadow effect */
+            transform: scale(1.1);
+            /* Slight zoom effect for selected */
+        }
+
+        .color-option.selected[data-color-id="2"] {
+            /* Adjust the selected pink color specifically */
+            border-color: #ff3385;
+            /* A darker shade of pink for the selected color */
+            box-shadow: 0 0 8px rgba(255, 51, 133, 0.7);
+            /* Stronger pink shadow for selected pink */
         }
 
         .size-option {
             text-decoration: none;
-            border: 1px solid;
-            color: #000000;
-            font-weight: bold;
-            padding: 5px 10px;
+            border: 1px solid #ddd;
+            color: #333;
+            font-weight: 600;
+            padding: 8px 15px;
             display: inline-block;
-            margin-right: 10px;
+            margin-right: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         .size-option:hover {
-            color: #677380;
+            background-color: #f1f1f1;
+            /* Subtle hover background */
+            color: #ff66b2;
+            /* Light pink text color on hover */
+            border-color: #ff66b2;
+            /* Light pink border on hover */
+        }
+
+        .size-option.selected {
+            background-color: #ff66b2;
+            /* Solid light pink background */
+            color: white;
+            /* White text when selected */
+            border-color: #ffffff;
+            /* White border to contrast */
+            box-shadow: 0 2px 5px rgba(255, 102, 178, 0.5);
+            /* Light pink shadow to highlight selection */
         }
 
         .size-option.disabled {
             color: #ccc;
+            background-color: #f8f9fa;
+            /* Light background for disabled state */
+            border-color: #ddd;
             pointer-events: none;
             cursor: not-allowed;
         }
 
         .out-of-stock {
             font-size: 12px;
-            color: red;
-            margin-left: 5px;
-            font-weight: normal;
+            color: #dc3545;
+            /* Red color for out-of-stock */
+            margin-left: 8px;
+            font-weight: 500;
         }
     </style>
 @endsection
@@ -65,6 +139,12 @@
 
     <section class="section-7 pt-3 mb-3">
         <div class="container">
+            @if ($product_variant)
+                <a href="{{ route('front.product', $product->slug) }}" class="back-to-base">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to {{ $product->title }}
+                </a>
+            @endif
             <div class="row ">
                 @include('admin.message')
                 <div class="col-md-5">
@@ -120,11 +200,13 @@
 
                                 @foreach ($product->variants as $variant)
                                     @if (!in_array($variant->color->name, $shownColors))
-                                        <a href="{{ request()->has('size') ? request()->fullUrlWithQuery(['color' => $variant->size->id]) : route('product.variant.details', ['productId' => $product->id, 'slug' => $product->slug, 'variant_id' => $variant->id, 'color' => $variant->color->id]) }}"
-                                            class="color-option" style="background-color: {{ $variant->color->name }}"
-                                            title="{{ $variant->color->name }}">
+                                        <a href="javascript:void(0);" class="color-option"
+                                            style="background-color: {{ $variant->color->name }}"
+                                            title="{{ $variant->color->name }}" data-product-id="{{ $product->id }}"
+                                            data-variant-id="{{ $variant->id }}"
+                                            data-color-id="{{ $variant->color->id }}"
+                                            data-size-id="{{ $variant->size->id }}">
                                         </a>
-
                                         @php
                                             $shownColors[] = $variant->color->name;
                                         @endphp
@@ -133,40 +215,49 @@
                             </div>
 
 
+
                             @php
                                 // Initialize $shownSizes as an empty array to avoid the undefined variable error
                                 $shownSizes = [];
+                                $selectedColor = request()->get('color'); // Get the selected color from the query parameters
+
+                                // Determine if there's only one size for the selected color
+$availableSizesForSelectedColor = $product->variants
+    ->where('color.id', $selectedColor)
+    ->pluck('size')
+                                    ->unique();
                             @endphp
 
                             <!-- Size Options -->
-
                             <div class="size-options mt-2 mb-2">
-                                <div class="size-options-list">
+                                <div class="size-options-list" id="size-options">
                                     @foreach ($product->variants as $variant)
-                                        @if (!in_array($variant->size, $shownSizes))
-                                            <a href="{{ request()->has('color') ? request()->fullUrlWithQuery(['size' => $variant->size->id]) : route('product.variant.details', ['productId' => $product->id, 'slug' => $product->slug, 'variant_id' => $variant->id, 'size' => $variant->size->id]) }}"
-                                                class="size-option {{ !$variant->qty ? 'disabled' : '' }}"
-                                                data-product-id="{{ $product->id }}"
-                                                data-variant-id="{{ $variant->id }}"
-                                                data-size="{{ $variant->size->name }}"
-                                                {{ $variant->qty ? '' : 'aria-disabled="true"' }}>
+                                        @if ($variant->color->id == $selectedColor && !in_array($variant->size->name, $shownSizes))
+                                            <!-- Only show sizes for the selected color -->
+                                            <a href="{{ route('product.variant.details', ['productId' => $product->id, 'slug' => $product->slug, 'variant_id' => $variant->id, 'color' => $variant->color->id, 'size' => $variant->size->id]) }}"
+                                                class="{{ !$variant->qty ? 'disabled' : '' }}">
+                                                <div class="size-option" data-color-id="{{ $variant->color->id }}"
+                                                    data-size-id="{{ $variant->size->id }}"
+                                                    data-qty="{{ $variant->qty }}">
 
-                                                @if ($variant->qty)
-                                                    {{ $variant->size->name }}
-                                                @endif
+                                                    @if ($variant->qty)
+                                                        {{ $variant->size->name }}
+                                                    @endif
 
-                                                @if (!$variant->qty)
-                                                    <span class="out-of-stock">Out of Stock</span>
-                                                @endif
+                                                    @if (!$variant->qty)
+                                                        <span class="out-of-stock">Out of Stock</span>
+                                                    @endif
+                                                </div>
                                             </a>
 
                                             @php
-                                                $shownSizes[] = $variant->size;
+                                                $shownSizes[] = $variant->size->name;
                                             @endphp
                                         @endif
                                     @endforeach
                                 </div>
                             </div>
+
 
                         </div>
 
@@ -536,6 +627,83 @@
                     console.log("something went wrong");
                 }
             });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Color selection click handler
+            $('.color-option').on('click', function() {
+                var selectedColorId = $(this).data('color-id'); // Get the selected color ID
+                var productId = $(this).data('product-id'); // Get the product ID
+                var variantId = $(this).data('variant-id'); // Get the variant ID
+                var sizeId = $(this).data('size-id'); // Get the size ID (optional)
+
+                // Construct the updated URL with the selected color, productId, variantId, and optionally sizeId
+                var updatedUrl = '/product/tee/variant?productId=' + productId + '&variant_id=' +
+                    variantId + '&color=' + selectedColorId;
+
+                // Optionally include the size parameter if size is available
+                if (sizeId) {
+                    updatedUrl += '&size=' + sizeId;
+                }
+
+                // Redirect to the updated URL
+                window.location.href = updatedUrl;
+            });
+
+
+            // Size selection click handler
+            $('.size-option a').on('click', function() {
+                var selectedSizeId = $(this).data('size'); // Get the selected size ID
+                var selectedColorId = new URLSearchParams(window.location.search).get('color');
+                var currentUrl = new URL(window.location.href);
+
+
+
+                // Set both the color and size in the URL
+                currentUrl.searchParams.set('color', selectedColorId);
+                currentUrl.searchParams.set('size', selectedSizeId);
+
+                // Redirect to the updated URL
+                window.location.href = currentUrl.toString();
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Function to highlight the selected color option based on the URL
+            function updateSelectionFromUrl() {
+                // Get the 'color' and 'size' parameters from the URL
+                var selectedColorId = new URLSearchParams(window.location.search).get('color');
+                var selectedSizeId = new URLSearchParams(window.location.search).get('size');
+
+                // Apply 'selected' class to the color options
+                if (selectedColorId) {
+                    $('.color-option').each(function() {
+                        if ($(this).data('color-id') == selectedColorId) {
+                            $(this).addClass('selected'); // Add the selected class to the matching color
+                        } else {
+                            $(this).removeClass(
+                                'selected'); // Remove the selected class from non-matching colors
+                        }
+                    });
+                }
+
+                // Apply 'selected' class to the size options
+                if (selectedSizeId) {
+                    $('.size-option').each(function() {
+                        if ($(this).data('size-id') == selectedSizeId) {
+                            $(this).addClass('selected'); // Add the selected class to the matching size
+                        } else {
+                            $(this).removeClass(
+                                'selected'); // Remove the selected class from non-matching sizes
+                        }
+                    });
+                }
+            }
+
+            // Call the function when the page is loaded
+            updateSelectionFromUrl();
         });
     </script>
 @endsection

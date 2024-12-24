@@ -19,7 +19,7 @@
                             <h1 class="display-4 text-white mb-3">Kids Fashion</h1>
                             <p class="mx-md-5 px-5">Lorem rebum magna amet lorem magna erat diam stet. Sadips duo
                                 stet amet amet ndiam elitr ipsum diam</p>
-                            <a class="btn btn-outline-light py-2 px-4 mt-3" href="{{route('front.shop')}}">Shop Now</a>
+                            <a class="btn btn-outline-light py-2 px-4 mt-3" href="{{ route('front.shop') }}">Shop Now</a>
                         </div>
                     </div>
                 </div>
@@ -159,25 +159,41 @@
                                                 src="{{ asset('admin-assets/img/default-150x150.png') }}">
                                         @endif
                                     </a>
-                                        <a onclick="addToWishlist({{$product->id}})" class="whishlist" href="javascript:void(0);"><i class="far fa-heart"></i></a>
+                                    <a onclick="addToWishlist({{ $product->id }})" class="whishlist"
+                                        href="javascript:void(0);"><i class="far fa-heart"></i></a>
 
-                                        <div class="product-action">
-                                            @if ($product->track_qty =='Yes')
-                                                @if ($product->qty > 0)
-                                                    <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
-                                                        <i class="fa fa-shopping-cart"></i> Add To Cart
-                                                    </a>
-                                                @else
-                                                    <a class="btn btn-dark" href="javascript:void(0);">
-                                                        Out Of Stock
-                                                    </a>
-                                                @endif
-                                            @else
-                                                <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                    <div class="product-action">
+                                        @php
+                                            // Convert variants to a collection
+                                            $variants = collect($product->variants);
+
+                                            // Check if any variant has qty > 0
+                                            $anyInStock = $variants
+                                                ->filter(function ($variant) {
+                                                    return $variant['qty'] > 0; // Ensure key matches your JSON structure
+                                                })
+                                                ->isNotEmpty();
+                                        @endphp
+
+                                        @if ($product->track_qty == 'Yes')
+                                            @if ($anyInStock)
+                                                <a class="btn btn-dark"
+                                                    href="{{ route('front.product', $product->slug) }}">
                                                     <i class="fa fa-shopping-cart"></i> Add To Cart
                                                 </a>
+                                            @else
+                                                <a class="btn btn-dark" href="javascript:void(0);">
+                                                    Out Of Stock
+                                                </a>
                                             @endif
-                                        </div>
+                                        @else
+                                            <a class="btn btn-dark" href="javascript:void(0);"
+                                                onclick="addToCart({{ $product->id }});">
+                                                <i class="fa fa-shopping-cart"></i> Add To Cart
+                                            </a>
+                                        @endif
+                                    </div>
+
                                 </div>
                                 <div class="card-body text-center mt-3">
                                     <a class="h6 link" href="product.php">{{ $product->title }}</a>
@@ -219,25 +235,28 @@
                                             <img src="{{ asset('admin-assets/img/default-150x150.png') }}">
                                         @endif
                                     </a>
-                                    <a onclick="addToWishlist({{$product->id}})" class="whishlist" href="javascript:void(0);"><i class="far fa-heart"></i></a>
+                                    <a onclick="addToWishlist({{ $product->id }})" class="whishlist"
+                                        href="javascript:void(0);"><i class="far fa-heart"></i></a>
 
-                                        <div class="product-action">
-                                            @if ($product->track_qty =='Yes')
-                                                @if ($product->qty > 0)
-                                                    <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
-                                                        <i class="fa fa-shopping-cart"></i> Add To Cart
-                                                    </a>
-                                                @else
-                                                    <a class="btn btn-dark" href="javascript:void(0);">
-                                                        Out Of Stock
-                                                    </a>
-                                                @endif
-                                            @else
-                                                <a class="btn btn-dark" href="javascript:void(0);" onclick="addToCart({{$product->id}});">
+                                    <div class="product-action">
+                                        @if ($product->track_qty == 'Yes')
+                                            @if ($product->qty > 0)
+                                                <a class="btn btn-dark" href="javascript:void(0);"
+                                                    onclick="addToCart({{ $product->id }});">
                                                     <i class="fa fa-shopping-cart"></i> Add To Cart
                                                 </a>
+                                            @else
+                                                <a class="btn btn-dark" href="javascript:void(0);">
+                                                    Out Of Stock
+                                                </a>
                                             @endif
-                                        </div>
+                                        @else
+                                            <a class="btn btn-dark" href="javascript:void(0);"
+                                                onclick="addToCart({{ $product->id }});">
+                                                <i class="fa fa-shopping-cart"></i> Add To Cart
+                                            </a>
+                                        @endif
+                                    </div>
                                 </div>
                                 <div class="card-body text-center mt-3">
                                     <a class="h6 link" href="product.php">{{ $product->title }}</a>

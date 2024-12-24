@@ -235,7 +235,7 @@ class CartController extends Controller
                 $totalQty += $item->qty;
             }
 
-            $totalShippingCharge = $totalQty * $shippingInfo->amount;
+            $totalShippingCharge = $totalQty * ($shippingInfo->amount ?? 0);
             $grandTotal = ($subTotal - $discount) + $totalShippingCharge;
         } else {
             $grandTotal = ($subTotal - $discount);
@@ -300,175 +300,175 @@ class CartController extends Controller
 
         //step3 is to store data in orders table
 
-        if ($request->payment_method == 'cod') {
 
-            $discountCodeId = NULL;
-            $promoCode = '';
-            $shipping = 0;
-            $discount = 0;
-            $subTotal = Cart::subtotal(2, '.', '');
-            $grandTotal = $subTotal + $shipping;
+        $discountCodeId = NULL;
+        $promoCode = '';
+        $shipping = 0;
+        $discount = 0;
+        $subTotal = Cart::subtotal(2, '.', '');
+        $grandTotal = $subTotal + $shipping;
 
-            //applying an discount
-            if (session()->has('code')) {
-                $code = session()->get('code');
+        //applying an discount
+        if (session()->has('code')) {
+            $code = session()->get('code');
 
-                if ($code->type == 'percent') {
-                    $discount = $subTotal * ($code->discount_amount / 100);
-                    // $grandTotal = $subTotal-$discount;
-                } else {
-                    $discount = $code->discount_amount;
-                }
-
-                $discountCodeId = $code->id;
-                $promoCode = $code->code;
-            }
-
-            //calculate shipping
-            $shippingInfo = ShippingCharge::where('country_id', 'rest_of_world')->first();
-
-            $totalQty = 0;
-            foreach (Cart::content() as $item) {
-                $totalQty += $item->qty;
-            }
-
-            if ($shippingInfo != null) {
-
-                $shipping = $totalQty * $shippingInfo->amount;
-                $grandTotal = ($subTotal - $discount) + $shipping;
+            if ($code->type == 'percent') {
+                $discount = $subTotal * ($code->discount_amount / 100);
+                // $grandTotal = $subTotal-$discount;
             } else {
-
-                $shippingInfo = ShippingCharge::where('country_id', 'rest_of_world')->first();
-                $shipping = $totalQty * $shippingInfo->amount;
-                $grandTotal = ($subTotal - $discount) + $shipping;
+                $discount = $code->discount_amount;
             }
 
-            $order = new Order;
-            $order->subtotal = $subTotal;
-            $order->shipping = $shipping;
-            $order->discount = $discount;
-            $order->grand_total = $grandTotal;
-            $order->coupon_code_id = $discountCodeId;
-            $order->coupon_code = $promoCode;
-            $order->payment_status = 'not paid';
-            $order->status = 'pending';
-            $order->user_id = $user->id;
-            $order->first_name = $request->first_name;
-            $order->last_name = $request->last_name;
-            $order->email = $request->email;
-            $order->mobile = $request->mobile;
-            $order->address = $request->address;
-            $order->apartment = $request->apartment;
-            $order->state = $request->state;
-            $order->city = $request->city;
-            $order->zip = $request->zip;
-            $order->notes = $request->notes;
-            $order->country_id = $request->country;
-            $paymentMethod = $request->input('selected_payment_method');
-            switch ($paymentMethod) {
-                case '1':
-                    $order->payment_method = 'COD';
-                    break;
-                case '2':
-                    $order->payment_method = 'Stripe';
-                    break;
-                case '3':
-                    $order->payment_method = 'PayPal';
-                    break;
-                default:
-                    $order->payment_method = 'Unknown';
-            }
-
-            $order->save();
-
-
-            // dd(Cart::content());
-
-            //step 4 is to store data in order items table
-            foreach (Cart::content() as $item) {
-                $orderItem = new OrderItems;
-                $orderItem->product_id = $item->id;
-                $orderItem->order_id = $order->id;
-                $orderItem->name = $item->name;
-                $orderItem->qty = $item->qty;
-                $orderItem->price = $item->price;
-                $orderItem->total = $item->price * $item->qty;
-                $orderItem->save();
-
-                $productData = Product::find($item->id);
-
-                if ($item->options->variant_id) {
-                    $variant = ProductVariant::find($item->options->variant_id);
-                    $variant->qty -= $item->qty;
-                    $variant->save();
-                } else {
-                    // If there's no variant, manage stock for the base product
-                    if ($productData->track_qty == 'Yes') {
-                        $productData->qty -= $item->qty;
-                        $productData->save();
-                        // dd($item);
-
-                    }
-                }
-            }
-
-            $cartContent = Cart::content();
-            $images = []; // Array to store images
-            $message = "Thank you for purchasing Choom!! \n Another satisfied customer\n\n";
-
-            foreach ($cartContent as $item) {
-                $image = null;
-                $varinatImage = null;
-
-                $message .= "\nProduct: " . $item->name . " x " . $item->qty . " $ " . number_format($item->price, 2) . " each\n"; // Add product name, quantity, and price
-
-
-                if (!is_null($item->options->variantImage) && isset($item->options->variantImage->image)) {
-                    $varinatImage = $item->options->variantImage->image;
-                } elseif (!is_null($item->options->productImage) && isset($item->options->productImage->image)) {
-                    // Fallback to productImage if variantImage is not available
-                    $image = $item->options->productImage->image;
-                }
-
-                if ($image) {
-                    $imagePath = public_path() . '/uploads/product/large/' . $image;
-                    $images[] = $imagePath; // Add the image to the array
-                }
-
-                if ($varinatImage) {
-                    $imagePath = public_path() . '/uploads/product/large/variants/' . $varinatImage;
-                    $images[] = $imagePath; // Add the image to the array
-                }
-            }
-
-            $facebookController = new FacebookPostController();
-
-            if (!empty($images)) {
-                $response = $facebookController->create(
-                    $message,
-                    $images
-                );
-            } else {
-                $response = $facebookController->create(
-                    $message
-                );
-            }
-
-            orderEmail($order->id, 'customer');
-
-            session()->flash('create-success', 'You have successfully placed your order');
-
-            Cart::destroy();
-
-            session()->forget('code');
-
-            return response()->json([
-                'status' => true,
-                'orderId' => $order->id,
-                'message' => 'You have successfully placed your order'
-            ]);
-        } else {
+            $discountCodeId = $code->id;
+            $promoCode = $code->code;
         }
+
+        //calculate shipping
+        $shippingInfo = ShippingCharge::where('country_id', 'rest_of_world')->first();
+
+        $totalQty = 0;
+        foreach (Cart::content() as $item) {
+            $totalQty += $item->qty;
+        }
+
+        if ($shippingInfo != null) {
+
+            $shipping = $totalQty * $shippingInfo->amount;
+            $grandTotal = ($subTotal - $discount) + $shipping;
+        } else {
+
+            $shippingInfo = ShippingCharge::where('country_id', 'rest_of_world')->first();
+            $shipping = $totalQty * $shippingInfo->amount;
+            $grandTotal = ($subTotal - $discount) + $shipping;
+        }
+
+        $order = new Order;
+        $order->subtotal = $subTotal;
+        $order->shipping = $shipping;
+        $order->discount = $discount;
+        $order->grand_total = $grandTotal;
+        $order->coupon_code_id = $discountCodeId;
+        $order->coupon_code = $promoCode;
+        $order->payment_status = 'not paid';
+        $order->status = 'pending';
+        $order->user_id = $user->id;
+        $order->first_name = $request->first_name;
+        $order->last_name = $request->last_name;
+        $order->email = $request->email;
+        $order->mobile = $request->mobile;
+        $order->address = $request->address;
+        $order->apartment = $request->apartment;
+        $order->state = $request->state;
+        $order->city = $request->city;
+        $order->zip = $request->zip;
+        $order->notes = $request->notes;
+        $order->country_id = $request->country;
+        $paymentMethod = $request->input('selected_payment_method');
+        switch ($paymentMethod) {
+            case '1':
+                $order->payment_method = 'COD';
+                break;
+            case '2':
+                $order->payment_method = 'Stripe';
+                break;
+            case '3':
+                $order->payment_method = 'PayPal';
+                break;
+            case '4':
+                $order->payment_method = 'ABA';
+                break;
+            default:
+                $order->payment_method = 'Unknown';
+        }
+
+        $order->save();
+
+
+        // dd(Cart::content());
+
+        //step 4 is to store data in order items table
+        foreach (Cart::content() as $item) {
+            $orderItem = new OrderItems;
+            $orderItem->product_id = $item->id;
+            $orderItem->order_id = $order->id;
+            $orderItem->name = $item->name;
+            $orderItem->qty = $item->qty;
+            $orderItem->price = $item->price;
+            $orderItem->total = $item->price * $item->qty;
+            $orderItem->save();
+
+            $productData = Product::find($item->id);
+
+            if ($item->options->variant_id) {
+                $variant = ProductVariant::find($item->options->variant_id);
+                $variant->qty -= $item->qty;
+                $variant->save();
+            } else {
+                // If there's no variant, manage stock for the base product
+                if ($productData->track_qty == 'Yes') {
+                    $productData->qty -= $item->qty;
+                    $productData->save();
+                    // dd($item);
+
+                }
+            }
+        }
+
+        $cartContent = Cart::content();
+        $images = []; // Array to store images
+        $message = "Thank you for purchasing Choom!! \n Another satisfied customer\n\n";
+
+        foreach ($cartContent as $item) {
+            $image = null;
+            $varinatImage = null;
+
+            $message .= "\nProduct: " . $item->name . " x " . $item->qty . " $ " . number_format($item->price, 2) . " each\n"; // Add product name, quantity, and price
+
+
+            if (!is_null($item->options->variantImage) && isset($item->options->variantImage->image)) {
+                $varinatImage = $item->options->variantImage->image;
+            } elseif (!is_null($item->options->productImage) && isset($item->options->productImage->image)) {
+                // Fallback to productImage if variantImage is not available
+                $image = $item->options->productImage->image;
+            }
+
+            if ($image) {
+                $imagePath = public_path() . '/uploads/product/large/' . $image;
+                $images[] = $imagePath; // Add the image to the array
+            }
+
+            if ($varinatImage) {
+                $imagePath = public_path() . '/uploads/product/large/variants/' . $varinatImage;
+                $images[] = $imagePath; // Add the image to the array
+            }
+        }
+
+        $facebookController = new FacebookPostController();
+
+        if (!empty($images)) {
+            $response = $facebookController->create(
+                $message,
+                $images
+            );
+        } else {
+            $response = $facebookController->create(
+                $message
+            );
+        }
+
+        orderEmail($order->id, 'customer');
+
+        session()->flash('create-success', 'You have successfully placed your order');
+
+        Cart::destroy();
+
+        session()->forget('code');
+
+        return response()->json([
+            'status' => true,
+            'orderId' => $order->id,
+            'message' => 'You have successfully placed your order'
+        ]);
     }
     public function thankyou($id)
     {
@@ -483,6 +483,9 @@ class CartController extends Controller
             $subTotal = Cart::subtotal(2, '.', '');
             $discountString = '';
             $discount = 0;
+            $discountType = null;
+            $discountTypeAmount = null;
+
 
             //applying an discount
             if (session()->has('code')) {
@@ -494,8 +497,12 @@ class CartController extends Controller
 
                 if ($code->type == 'percent') {
                     $discount = $subTotal * ($code->discount_amount / 100);
+                    $discountType = 'percent';
+                    $discountTypeAmount = $code->discount_amount;
                     // $grandTotal = $subTotal-$discount;
                 } else {
+                    $discountTypeAmount = $code->discount_amount;
+                    $discountType = 'fixed';
                     $discount = $code->discount_amount;
                 }
             }
@@ -516,6 +523,8 @@ class CartController extends Controller
                     'status' => true,
                     'grandTotal' => number_format($grandTotal, 2),
                     'discount' => number_format($discount, 2),
+                    'discountType' => $discountType,
+                    'discountTypeAmount' => $discountTypeAmount,
                     'discountString' => $discountString,
                     'shippingCharge' => number_format($shippingCharge, 2),
                 ]);
@@ -529,6 +538,8 @@ class CartController extends Controller
                     'status' => true,
                     'grandTotal' => number_format($grandTotal, 2),
                     'discount' => number_format($discount, 2),
+                    'discountType' => $discountType,
+                    'discountTypeAmount' => $discountTypeAmount,
                     'discountString' => $discountString,
                     'shippingCharge' => number_format($shippingCharge, 2),
                 ]);
@@ -538,6 +549,10 @@ class CartController extends Controller
             $subTotal = Cart::subtotal(2, '.', '');
             $discountString = '';
             $discount = 0;
+            $discountType = null;
+            $discountTypeAmount = null;
+
+
             //applying an discount
             if (session()->has('code')) {
                 $code = session()->get('code');
@@ -548,8 +563,12 @@ class CartController extends Controller
                 </div>';
                 if ($code->type == 'percent') {
                     $discount = $subTotal * ($code->discount_amount / 100);
+                    $discountType = 'percent';
+                    $discountTypeAmount = $code->discount_amount;
                     // $grandTotal = $subTotal-$discount;
                 } else {
+                    $discountTypeAmount = $code->discount_amount;
+                    $discountType = 'fixed';
                     $discount = $code->discount_amount;
                 }
             }
@@ -561,6 +580,8 @@ class CartController extends Controller
                 'status' => true,
                 'grandTotal' => number_format($grandTotal, 2),
                 'discount' => number_format($discount, 2),
+                'discountType' => $discountType,
+                'discountTypeAmount' => $discountTypeAmount,
                 'discountString' => $discountString,
                 'shippingCharge' => number_format(0, 2),
             ]);
